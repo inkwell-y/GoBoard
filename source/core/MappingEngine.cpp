@@ -4,16 +4,38 @@
 
 namespace
 {
-constexpr int boardSize = BoardState::boardSize;
+constexpr int boardSize = FeatureExtractor::BoardFeatures::boardSize;
 constexpr int centerStart = 3;
 constexpr int centerEnd = 5;
 constexpr int centerAreaCellCount = 9;
 constexpr int halfAreaCellCount = 36;
+
+bool isOccupied(const FeatureExtractor::BoardFeatures& features, int row, int column) noexcept
+{
+    return features.getValue(FeatureExtractor::Channel::Black, row, column) > 0.5f
+        || features.getValue(FeatureExtractor::Channel::White, row, column) > 0.5f;
 }
 
-MappingEngine::MacroValues MappingEngine::mapBoardState(const BoardState& boardState) noexcept
+int countChannel(const FeatureExtractor::BoardFeatures& features, FeatureExtractor::Channel channel) noexcept
 {
-    MacroValues values;
+    int count = 0;
+
+    for (int row = 0; row < boardSize; ++row)
+    {
+        for (int column = 0; column < boardSize; ++column)
+        {
+            if (features.getValue(channel, row, column) > 0.5f)
+                ++count;
+        }
+    }
+
+    return count;
+}
+}
+
+ControlVector DeterministicMappingEngine::mapFeatures(const FeatureExtractor::BoardFeatures& features) const noexcept
+{
+    ControlVector values;
     int centerAreaOccupiedCount = 0;
     int topHalfOccupiedCount = 0;
     int bottomHalfOccupiedCount = 0;
@@ -24,9 +46,7 @@ MappingEngine::MacroValues MappingEngine::mapBoardState(const BoardState& boardS
     {
         for (int column = 0; column < boardSize; ++column)
         {
-            const auto cell = boardState.getCell(row, column);
-
-            if (cell == BoardState::CellState::Empty)
+            if (! isOccupied(features, row, column))
                 continue;
 
             if (row >= centerStart && row <= centerEnd && column >= centerStart && column <= centerEnd)
@@ -44,19 +64,23 @@ MappingEngine::MacroValues MappingEngine::mapBoardState(const BoardState& boardS
         }
     }
 
-    values.blackStoneDensity = clamp01(static_cast<float>(boardState.countBlack()) / static_cast<float>(BoardState::numCells));
-    values.whiteStoneDensity = clamp01(static_cast<float>(boardState.countWhite()) / static_cast<float>(BoardState::numCells));
-    values.occupiedDensity = clamp01(static_cast<float>(boardState.countOccupied()) / static_cast<float>(BoardState::numCells));
-    values.centerAreaDensity = clamp01(static_cast<float>(centerAreaOccupiedCount) / static_cast<float>(centerAreaCellCount));
-    values.topHalfDensity = clamp01(static_cast<float>(topHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
-    values.bottomHalfDensity = clamp01(static_cast<float>(bottomHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
-    values.leftHalfDensity = clamp01(static_cast<float>(leftHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
-    values.rightHalfDensity = clamp01(static_cast<float>(rightHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
+    const auto blackCount = countChannel(features, FeatureExtractor::Channel::Black);
+    const auto whiteCount = countChannel(features, FeatureExtractor::Channel::White);
+    const auto occupiedCount = blackCount + whiteCount;
+
+    values[ControlVector::blackStoneDensity] = clamp01(static_cast<float>(blackCount) / static_cast<float>(BoardState::numCells));
+    values[ControlVector::whiteStoneDensity] = clamp01(static_cast<float>(whiteCount) / static_cast<float>(BoardState::numCells));
+    values[ControlVector::occupiedDensity] = clamp01(static_cast<float>(occupiedCount) / static_cast<float>(BoardState::numCells));
+    values[ControlVector::centerAreaDensity] = clamp01(static_cast<float>(centerAreaOccupiedCount) / static_cast<float>(centerAreaCellCount));
+    values[ControlVector::topHalfDensity] = clamp01(static_cast<float>(topHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
+    values[ControlVector::bottomHalfDensity] = clamp01(static_cast<float>(bottomHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
+    values[ControlVector::leftHalfDensity] = clamp01(static_cast<float>(leftHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
+    values[ControlVector::rightHalfDensity] = clamp01(static_cast<float>(rightHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
 
     return values;
 }
 
-float MappingEngine::clamp01(float value) noexcept
+float DeterministicMappingEngine::clamp01(float value) noexcept
 {
     return std::clamp(value, 0.0f, 1.0f);
 }

@@ -31,13 +31,29 @@ juce_add_plugin("${PROJECT_NAME}"
 
 add_library(SharedCode INTERFACE)
 
-file(GLOB_RECURSE SourceFiles CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/*.h")
+set(SourceFiles
+    source/PluginEditor.cpp
+    source/PluginEditor.h
+    source/PluginProcessor.cpp
+    source/PluginProcessor.h
+    source/core/BoardState.cpp
+    source/core/BoardState.h
+    source/core/ControlVector.h
+    source/core/FeatureExtractor.cpp
+    source/core/FeatureExtractor.h
+    source/core/MappingEngine.cpp
+    source/core/MappingEngine.h
+    source/gui/BoardComponent.cpp
+    source/gui/BoardComponent.h)
 
-file(GLOB_RECURSE CoreSourceFiles CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/core/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/core/*.h")
+set(CoreSourceFiles
+    source/core/BoardState.cpp
+    source/core/BoardState.h
+    source/core/ControlVector.h
+    source/core/FeatureExtractor.cpp
+    source/core/FeatureExtractor.h
+    source/core/MappingEngine.cpp
+    source/core/MappingEngine.h)
 
 target_sources(SharedCode INTERFACE ${SourceFiles})
 
@@ -72,6 +88,7 @@ if (BUILD_TESTING)
     add_executable(GoBoardControllerTests
         tests/TestMain.cpp
         tests/BoardStateTests.cpp
+        tests/FeatureExtractorTests.cpp
         tests/MappingEngineTests.cpp
         ${CoreSourceFiles})
 

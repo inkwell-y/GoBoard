@@ -1,23 +1,20 @@
 #pragma once
 
-#include "BoardState.h"
+#include "ControlVector.h"
+#include "FeatureExtractor.h"
 
 class MappingEngine
 {
 public:
-    struct MacroValues
-    {
-        float blackStoneDensity = 0.0f;
-        float whiteStoneDensity = 0.0f;
-        float occupiedDensity = 0.0f;
-        float centerAreaDensity = 0.0f;
-        float topHalfDensity = 0.0f;
-        float bottomHalfDensity = 0.0f;
-        float leftHalfDensity = 0.0f;
-        float rightHalfDensity = 0.0f;
-    };
+    virtual ~MappingEngine() = default;
 
-    static MacroValues mapBoardState(const BoardState& boardState) noexcept;
+    virtual ControlVector mapFeatures(const FeatureExtractor::BoardFeatures& features) const noexcept = 0;
+};
+
+class DeterministicMappingEngine final : public MappingEngine
+{
+public:
+    ControlVector mapFeatures(const FeatureExtractor::BoardFeatures& features) const noexcept override;
 
 private:
     static float clamp01(float value) noexcept;

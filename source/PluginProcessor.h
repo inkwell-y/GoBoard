@@ -1,11 +1,14 @@
 #pragma once
 
 #include "core/BoardState.h"
+#include "core/ControlVector.h"
+#include "core/FeatureExtractor.h"
 #include "core/MappingEngine.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_osc/juce_osc.h>
 #include <array>
+#include <memory>
 
 class PluginProcessor : public juce::AudioProcessor
 {
@@ -39,16 +42,22 @@ public:
     juce::AudioProcessorValueTreeState& getState() noexcept;
     BoardState& getBoardState() noexcept;
     const BoardState& getBoardState() const noexcept;
+    const ControlVector& getCurrentControlVector() const noexcept;
+    juce::String getOscStatusText() const;
     void boardStateChanged();
 
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     bool ensureOscConnected();
-    void queueMacroMidiMessages(const MappingEngine::MacroValues&);
-    void sendMacroOscMessages(const MappingEngine::MacroValues&);
+    void updateControlVector();
+    void queueMacroMidiMessages(const ControlVector&);
+    void sendMacroOscMessages(const ControlVector&);
 
     juce::AudioProcessorValueTreeState state;
     BoardState boardState;
+    FeatureExtractor::BoardFeatures currentFeatures;
+    ControlVector currentControlVector;
+    std::unique_ptr<MappingEngine> mappingEngine;
     juce::CriticalSection pendingMidiLock;
     juce::MidiBuffer pendingMidiMessages;
     std::array<int, 8> lastMacroMidiValues { -1, -1, -1, -1, -1, -1, -1, -1 };

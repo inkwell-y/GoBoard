@@ -27,6 +27,10 @@ PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
     turnLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(turnLabel);
 
+    oscStatusLabel.setText(processorRef.getOscStatusText(), juce::dontSendNotification);
+    oscStatusLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(oscStatusLabel);
+
     resetButton.onClick = [this]
     {
         boardComponent.resetGame();
@@ -75,6 +79,8 @@ void PluginEditor::resized()
     auto controls = bounds.removeFromTop(32);
     turnLabel.setBounds(controls.removeFromLeft(controls.getWidth() - 120));
     resetButton.setBounds(controls.removeFromRight(100));
+    bounds.removeFromTop(8);
+    oscStatusLabel.setBounds(bounds.removeFromTop(24));
     bounds.removeFromTop(20);
 
     auto macroArea = bounds.removeFromRight(260);
@@ -97,17 +103,7 @@ void PluginEditor::updateTurnLabel()
 
 void PluginEditor::updateMacroLabels()
 {
-    const auto values = MappingEngine::mapBoardState(processorRef.getBoardState());
-    const std::array<float, 8> macroValues {
-        values.blackStoneDensity,
-        values.whiteStoneDensity,
-        values.occupiedDensity,
-        values.centerAreaDensity,
-        values.topHalfDensity,
-        values.bottomHalfDensity,
-        values.leftHalfDensity,
-        values.rightHalfDensity
-    };
+    const auto& macroValues = processorRef.getCurrentControlVector();
 
     for (std::size_t index = 0; index < macroLabels.size(); ++index)
     {

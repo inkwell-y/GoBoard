@@ -11,7 +11,8 @@ PluginProcessor::PluginProcessor()
     : juce::AudioProcessor(BusesProperties()
                                .withInput("Input", juce::AudioChannelSet::stereo(), true)
                                .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-      state(*this, nullptr, "STATE", createParameterLayout())
+      state(*this, nullptr, "STATE", createParameterLayout()),
+      mappingEngine(std::make_unique<DeterministicMappingEngine>())
 {
     ensureOscConnected();
     boardStateChanged();
@@ -139,11 +140,21 @@ const BoardState& PluginProcessor::getBoardState() const noexcept
     return boardState;
 }
 
+const ControlVector& PluginProcessor::getCurrentControlVector() const noexcept
+{
+    return currentControlVector;
+}
+
+juce::String PluginProcessor::getOscStatusText() const
+{
+    return "OSC: " + juce::String(oscHost) + ":" + juce::String(oscPort);
+}
+
 void PluginProcessor::boardStateChanged()
 {
-    const auto macroValues = MappingEngine::mapBoardState(boardState);
-    queueMacroMidiMessages(macroValues);
-    sendMacroOscMessages(macroValues);
+    updateControlVector();
+    queueMacroMidiMessages(currentControlVector);
+    sendMacroOscMessages(currentControlVector);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParameterLayout()
@@ -160,24 +171,19 @@ bool PluginProcessor::ensureOscConnected()
     return oscConnected;
 }
 
-void PluginProcessor::queueMacroMidiMessages(const MappingEngine::MacroValues& values)
+void PluginProcessor::updateControlVector()
 {
-    const std::array<float, 8> macroValues {
-        values.blackStoneDensity,
-        values.whiteStoneDensity,
-        values.occupiedDensity,
-        values.centerAreaDensity,
-        values.topHalfDensity,
-        values.bottomHalfDensity,
-        values.leftHalfDensity,
-        values.rightHalfDensity
-    };
+    currentFeatures = FeatureExtractor::extract(boardState);
+    currentControlVector = mappingEngine->mapFeatures(currentFeatures);
+}
 
+void PluginProcessor::queueMacroMidiMessages(const ControlVector& values)
+{
     const juce::ScopedLock lock(pendingMidiLock);
 
-    for (std::size_t index = 0; index < macroValues.size(); ++index)
+    for (std::size_t index = 0; index < ControlVector::size; ++index)
     {
-        const auto midiValue = juce::jlimit(0, 127, juce::roundToInt(macroValues[index] * 127.0f));
+        const auto midiValue = juce::jlimit(0, 127, juce::roundToInt(values[index] * 127.0f));
 
         if (midiValue == lastMacroMidiValues[index])
             continue;
@@ -187,36 +193,25 @@ void PluginProcessor::queueMacroMidiMessages(const MappingEngine::MacroValues& v
     }
 }
 
-void PluginProcessor::sendMacroOscMessages(const MappingEngine::MacroValues& values)
+void PluginProcessor::sendMacroOscMessages(const ControlVector& values)
 {
     if (! ensureOscConnected())
         return;
 
-    const std::array<float, 8> macroValues {
-        values.blackStoneDensity,
-        values.whiteStoneDensity,
-        values.occupiedDensity,
-        values.centerAreaDensity,
-        values.topHalfDensity,
-        values.bottomHalfDensity,
-        values.leftHalfDensity,
-        values.rightHalfDensity
-    };
-
-    for (std::size_t index = 0; index < macroValues.size(); ++index)
+    for (std::size_t index = 0; index < ControlVector::size; ++index)
     {
-        if (juce::approximatelyEqual(macroValues[index], lastMacroOscValues[index]))
+        if (juce::approximatelyEqual(values[index], lastMacroOscValues[index]))
             continue;
 
         const auto address = juce::String("/goboard/macro/") + juce::String(static_cast<int>(index + 1));
 
-        if (! oscSender.send(address, macroValues[index]))
+        if (! oscSender.send(address, values[index]))
         {
             oscConnected = false;
             return;
         }
 
-        lastMacroOscValues[index] = macroValues[index];
+        lastMacroOscValues[index] = values[index];
     }
 }
 

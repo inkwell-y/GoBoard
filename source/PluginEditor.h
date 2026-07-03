@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "core/MappingEngine.h"
 #include "gui/BoardComponent.h"
 
 #include <array>
@@ -23,6 +22,7 @@ private:
     BoardComponent boardComponent;
     juce::Label titleLabel;
     juce::Label turnLabel;
+    juce::Label oscStatusLabel;
     juce::TextButton resetButton { "Reset" };
     std::array<juce::Label, 8> macroLabels;
 
