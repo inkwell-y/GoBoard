@@ -13,10 +13,13 @@ public:
     void resized() override;
 
 private:
+    void updateTurnLabel();
+
     PluginProcessor& processorRef;
     BoardComponent boardComponent;
     juce::Label titleLabel;
-    juce::Label interactionLabel;
+    juce::Label turnLabel;
+    juce::TextButton resetButton { "Reset" };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };

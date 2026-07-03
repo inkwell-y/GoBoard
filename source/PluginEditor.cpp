@@ -10,13 +10,23 @@ PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
     titleLabel.setFont(juce::FontOptions(24.0f, juce::Font::bold));
     addAndMakeVisible(titleLabel);
 
-    interactionLabel.setText("Left click cycles Empty -> Black -> White. Right click clears a cell.",
-                             juce::dontSendNotification);
-    interactionLabel.setJustificationType(juce::Justification::centred);
-    interactionLabel.setMinimumHorizontalScale(0.8f);
-    addAndMakeVisible(interactionLabel);
+    turnLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(turnLabel);
+
+    resetButton.onClick = [this]
+    {
+        boardComponent.resetGame();
+    };
+    addAndMakeVisible(resetButton);
+
+    boardComponent.onGameStateChanged = [this]
+    {
+        updateTurnLabel();
+    };
 
     addAndMakeVisible(boardComponent);
+
+    updateTurnLabel();
 
     setResizable(true, false);
     setSize(720, 720);
@@ -39,7 +49,14 @@ void PluginEditor::resized()
     auto bounds = getLocalBounds().reduced(48);
     titleLabel.setBounds(bounds.removeFromTop(56));
     bounds.removeFromTop(12);
-    interactionLabel.setBounds(bounds.removeFromTop(32));
+    auto controls = bounds.removeFromTop(32);
+    turnLabel.setBounds(controls.removeFromLeft(controls.getWidth() - 120));
+    resetButton.setBounds(controls.removeFromRight(100));
     bounds.removeFromTop(20);
     boardComponent.setBounds(bounds);
+}
+
+void PluginEditor::updateTurnLabel()
+{
+    turnLabel.setText("Current turn: " + boardComponent.getCurrentTurnText(), juce::dontSendNotification);
 }

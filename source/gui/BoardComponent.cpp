@@ -22,6 +22,26 @@ BoardComponent::BoardComponent(BoardState& state)
     setOpaque(true);
 }
 
+BoardState::CellState BoardComponent::getCurrentTurn() const noexcept
+{
+    return currentTurn;
+}
+
+juce::String BoardComponent::getCurrentTurnText() const
+{
+    return currentTurn == BoardState::CellState::Black ? "Black" : "White";
+}
+
+void BoardComponent::resetGame()
+{
+    boardState.clear();
+    currentTurn = BoardState::CellState::Black;
+    repaint();
+
+    if (onGameStateChanged)
+        onGameStateChanged();
+}
+
 void BoardComponent::paint(juce::Graphics& g)
 {
     g.fillAll(backgroundColour);
@@ -35,6 +55,9 @@ void BoardComponent::paint(juce::Graphics& g)
 
 void BoardComponent::mouseDown(const juce::MouseEvent& event)
 {
+    if (!event.mods.isLeftButtonDown())
+        return;
+
     const auto cell = getCellAtPosition(event.position);
 
     if (!cell.has_value())
@@ -43,14 +66,15 @@ void BoardComponent::mouseDown(const juce::MouseEvent& event)
     const auto row = cell->x;
     const auto column = cell->y;
 
-    if (event.mods.isPopupMenu())
-        boardState.setCell(row, column, BoardState::CellState::Empty);
-    else if (event.mods.isLeftButtonDown())
-        boardState.cycleCell(row, column);
-    else
+    if (boardState.getCell(row, column) != BoardState::CellState::Empty)
         return;
 
+    boardState.setCell(row, column, currentTurn);
+    advanceTurn();
     repaint();
+
+    if (onGameStateChanged)
+        onGameStateChanged();
 }
 
 BoardComponent::BoardGeometry BoardComponent::getBoardGeometry() const noexcept
@@ -172,4 +196,11 @@ void BoardComponent::drawStones(juce::Graphics& g, const BoardGeometry& geometry
             }
         }
     }
+}
+
+void BoardComponent::advanceTurn() noexcept
+{
+    currentTurn = currentTurn == BoardState::CellState::Black
+                    ? BoardState::CellState::White
+                    : BoardState::CellState::Black;
 }

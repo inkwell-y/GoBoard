@@ -3,6 +3,7 @@
 #include "core/BoardState.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <functional>
 #include <optional>
 
 class BoardComponent : public juce::Component
@@ -10,8 +11,14 @@ class BoardComponent : public juce::Component
 public:
     explicit BoardComponent(BoardState&);
 
+    BoardState::CellState getCurrentTurn() const noexcept;
+    juce::String getCurrentTurnText() const;
+    void resetGame();
+
     void paint(juce::Graphics&) override;
     void mouseDown(const juce::MouseEvent&) override;
+
+    std::function<void()> onGameStateChanged;
 
 private:
     struct BoardGeometry
@@ -29,8 +36,10 @@ private:
     void drawGrid(juce::Graphics&, const BoardGeometry&) const;
     void drawStarPoints(juce::Graphics&, const BoardGeometry&) const;
     void drawStones(juce::Graphics&, const BoardGeometry&) const;
+    void advanceTurn() noexcept;
 
     BoardState& boardState;
+    BoardState::CellState currentTurn = BoardState::CellState::Black;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BoardComponent)
 };
