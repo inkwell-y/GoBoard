@@ -7,6 +7,7 @@ PluginProcessor::PluginProcessor()
                                .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       state(*this, nullptr, "STATE", createParameterLayout())
 {
+    boardStateChanged();
 }
 
 void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
@@ -30,14 +31,16 @@ bool PluginProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 
 void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    juce::ignoreUnused(midiMessages);
-
     juce::ScopedNoDenormals noDenormals;
     const auto totalNumInputChannels = getTotalNumInputChannels();
     const auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     for (auto channel = totalNumInputChannels; channel < totalNumOutputChannels; ++channel)
         buffer.clear(channel, 0, buffer.getNumSamples());
+
+    const juce::ScopedLock lock(pendingMidiLock);
+    midiMessages.addEvents(pendingMidiMessages, 0, buffer.getNumSamples(), 0);
+    pendingMidiMessages.clear();
 }
 
 juce::AudioProcessorEditor* PluginProcessor::createEditor()
@@ -62,7 +65,7 @@ bool PluginProcessor::acceptsMidi() const
 
 bool PluginProcessor::producesMidi() const
 {
-    return false;
+    return true;
 }
 
 bool PluginProcessor::isMidiEffect() const
@@ -128,9 +131,41 @@ const BoardState& PluginProcessor::getBoardState() const noexcept
     return boardState;
 }
 
+void PluginProcessor::boardStateChanged()
+{
+    queueMacroMidiMessages(MappingEngine::mapBoardState(boardState));
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParameterLayout()
 {
     return {};
+}
+
+void PluginProcessor::queueMacroMidiMessages(const MappingEngine::MacroValues& values)
+{
+    const std::array<float, 8> macroValues {
+        values.blackStoneDensity,
+        values.whiteStoneDensity,
+        values.occupiedDensity,
+        values.centerAreaDensity,
+        values.topHalfDensity,
+        values.bottomHalfDensity,
+        values.leftHalfDensity,
+        values.rightHalfDensity
+    };
+
+    const juce::ScopedLock lock(pendingMidiLock);
+
+    for (std::size_t index = 0; index < macroValues.size(); ++index)
+    {
+        const auto midiValue = juce::jlimit(0, 127, juce::roundToInt(macroValues[index] * 127.0f));
+
+        if (midiValue == lastMacroMidiValues[index])
+            continue;
+
+        lastMacroMidiValues[index] = midiValue;
+        pendingMidiMessages.addEvent(juce::MidiMessage::controllerEvent(1, 20 + static_cast<int>(index), midiValue), 0);
+    }
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

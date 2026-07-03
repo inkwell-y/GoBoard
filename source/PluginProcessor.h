@@ -1,8 +1,10 @@
 #pragma once
 
 #include "core/BoardState.h"
+#include "core/MappingEngine.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <array>
 
 class PluginProcessor : public juce::AudioProcessor
 {
@@ -36,12 +38,17 @@ public:
     juce::AudioProcessorValueTreeState& getState() noexcept;
     BoardState& getBoardState() noexcept;
     const BoardState& getBoardState() const noexcept;
+    void boardStateChanged();
 
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    void queueMacroMidiMessages(const MappingEngine::MacroValues&);
 
     juce::AudioProcessorValueTreeState state;
     BoardState boardState;
+    juce::CriticalSection pendingMidiLock;
+    juce::MidiBuffer pendingMidiMessages;
+    std::array<int, 8> lastMacroMidiValues { -1, -1, -1, -1, -1, -1, -1, -1 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };

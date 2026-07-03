@@ -35,6 +35,7 @@ PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
 
     boardComponent.onGameStateChanged = [this]
     {
+        processorRef.boardStateChanged();
         updateTurnLabel();
         updateMacroLabels();
     };
