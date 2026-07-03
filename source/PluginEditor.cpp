@@ -1,23 +1,25 @@
 #include "PluginEditor.h"
 
-PluginEditor::PluginEditor(PluginProcessor& processor)
-    : juce::AudioProcessorEditor(&processor), processorRef(processor)
+PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
+    : juce::AudioProcessorEditor(&pluginProcessor),
+      processorRef(pluginProcessor),
+      boardComponent(processorRef.getBoardState())
 {
-    juce::ignoreUnused(processorRef);
-
     titleLabel.setText("Go Board Controller", juce::dontSendNotification);
     titleLabel.setJustificationType(juce::Justification::centred);
-    titleLabel.setFont(juce::Font(24.0f, juce::Font::bold));
+    titleLabel.setFont(juce::FontOptions(24.0f, juce::Font::bold));
     addAndMakeVisible(titleLabel);
 
-    statusLabel.setText("Skeleton build only. Go board logic, OSC, MIDI, AI, ONNX, FPGA, and synth DSP are not implemented yet.",
-                        juce::dontSendNotification);
-    statusLabel.setJustificationType(juce::Justification::centred);
-    statusLabel.setMinimumHorizontalScale(0.8f);
-    addAndMakeVisible(statusLabel);
+    interactionLabel.setText("Left click cycles Empty -> Black -> White. Right click clears a cell.",
+                             juce::dontSendNotification);
+    interactionLabel.setJustificationType(juce::Justification::centred);
+    interactionLabel.setMinimumHorizontalScale(0.8f);
+    addAndMakeVisible(interactionLabel);
+
+    addAndMakeVisible(boardComponent);
 
     setResizable(true, false);
-    setSize(640, 360);
+    setSize(720, 720);
 }
 
 void PluginEditor::paint(juce::Graphics& g)
@@ -36,6 +38,8 @@ void PluginEditor::resized()
 {
     auto bounds = getLocalBounds().reduced(48);
     titleLabel.setBounds(bounds.removeFromTop(56));
-    bounds.removeFromTop(16);
-    statusLabel.setBounds(bounds.removeFromTop(96));
+    bounds.removeFromTop(12);
+    interactionLabel.setBounds(bounds.removeFromTop(32));
+    bounds.removeFromTop(20);
+    boardComponent.setBounds(bounds);
 }

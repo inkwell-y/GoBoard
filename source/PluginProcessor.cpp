@@ -118,6 +118,16 @@ juce::AudioProcessorValueTreeState& PluginProcessor::getState() noexcept
     return state;
 }
 
+BoardState& PluginProcessor::getBoardState() noexcept
+{
+    return boardState;
+}
+
+const BoardState& PluginProcessor::getBoardState() const noexcept
+{
+    return boardState;
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParameterLayout()
 {
     return {};

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/BoardState.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
 class PluginProcessor : public juce::AudioProcessor
@@ -32,11 +34,14 @@ public:
     void setStateInformation(const void* data, int sizeInBytes) override;
 
     juce::AudioProcessorValueTreeState& getState() noexcept;
+    BoardState& getBoardState() noexcept;
+    const BoardState& getBoardState() const noexcept;
 
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
     juce::AudioProcessorValueTreeState state;
+    BoardState boardState;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };

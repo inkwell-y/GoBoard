@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "gui/BoardComponent.h"
 
 class PluginEditor : public juce::AudioProcessorEditor
 {
@@ -13,8 +14,9 @@ public:
 
 private:
     PluginProcessor& processorRef;
+    BoardComponent boardComponent;
     juce::Label titleLabel;
-    juce::Label statusLabel;
+    juce::Label interactionLabel;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };
