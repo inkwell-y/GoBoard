@@ -1,5 +1,19 @@
 #include "PluginEditor.h"
 
+namespace
+{
+const std::array<const char*, 8> macroNames {
+    "Macro 1: Black density",
+    "Macro 2: White density",
+    "Macro 3: Occupied density",
+    "Macro 4: Center area density",
+    "Macro 5: Top half density",
+    "Macro 6: Bottom half density",
+    "Macro 7: Left half density",
+    "Macro 8: Right half density"
+};
+}
+
 PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
     : juce::AudioProcessorEditor(&pluginProcessor),
       processorRef(pluginProcessor),
@@ -22,14 +36,22 @@ PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
     boardComponent.onGameStateChanged = [this]
     {
         updateTurnLabel();
+        updateMacroLabels();
     };
 
     addAndMakeVisible(boardComponent);
 
+    for (auto& label : macroLabels)
+    {
+        label.setJustificationType(juce::Justification::centredLeft);
+        addAndMakeVisible(label);
+    }
+
     updateTurnLabel();
+    updateMacroLabels();
 
     setResizable(true, false);
-    setSize(720, 720);
+    setSize(980, 760);
 }
 
 void PluginEditor::paint(juce::Graphics& g)
@@ -53,10 +75,42 @@ void PluginEditor::resized()
     turnLabel.setBounds(controls.removeFromLeft(controls.getWidth() - 120));
     resetButton.setBounds(controls.removeFromRight(100));
     bounds.removeFromTop(20);
+
+    auto macroArea = bounds.removeFromRight(260);
+    bounds.removeFromRight(20);
     boardComponent.setBounds(bounds);
+
+    constexpr int rowHeight = 34;
+
+    for (auto& label : macroLabels)
+    {
+        label.setBounds(macroArea.removeFromTop(rowHeight));
+        macroArea.removeFromTop(8);
+    }
 }
 
 void PluginEditor::updateTurnLabel()
 {
     turnLabel.setText("Current turn: " + boardComponent.getCurrentTurnText(), juce::dontSendNotification);
+}
+
+void PluginEditor::updateMacroLabels()
+{
+    const auto values = MappingEngine::mapBoardState(processorRef.getBoardState());
+    const std::array<float, 8> macroValues {
+        values.blackStoneDensity,
+        values.whiteStoneDensity,
+        values.occupiedDensity,
+        values.centerAreaDensity,
+        values.topHalfDensity,
+        values.bottomHalfDensity,
+        values.leftHalfDensity,
+        values.rightHalfDensity
+    };
+
+    for (std::size_t index = 0; index < macroLabels.size(); ++index)
+    {
+        macroLabels[index].setText(juce::String(macroNames[index]) + ": " + juce::String(macroValues[index], 3),
+                                   juce::dontSendNotification);
+    }
 }

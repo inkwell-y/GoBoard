@@ -7,14 +7,14 @@ class MappingEngine
 public:
     struct MacroValues
     {
-        float density = 0.0f;
-        float balance = 0.5f;
-        float centerX = 0.5f;
-        float centerY = 0.5f;
-        float edge = 0.0f;
-        float conflict = 0.0f;
-        float symmetry = 0.0f;
-        float cluster = 0.0f;
+        float blackStoneDensity = 0.0f;
+        float whiteStoneDensity = 0.0f;
+        float occupiedDensity = 0.0f;
+        float centerAreaDensity = 0.0f;
+        float topHalfDensity = 0.0f;
+        float bottomHalfDensity = 0.0f;
+        float leftHalfDensity = 0.0f;
+        float rightHalfDensity = 0.0f;
     };
 
     static MacroValues mapBoardState(const BoardState& boardState) noexcept;

@@ -1,7 +1,10 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "core/MappingEngine.h"
 #include "gui/BoardComponent.h"
+
+#include <array>
 
 class PluginEditor : public juce::AudioProcessorEditor
 {
@@ -13,6 +16,7 @@ public:
     void resized() override;
 
 private:
+    void updateMacroLabels();
     void updateTurnLabel();
 
     PluginProcessor& processorRef;
@@ -20,6 +24,7 @@ private:
     juce::Label titleLabel;
     juce::Label turnLabel;
     juce::TextButton resetButton { "Reset" };
+    std::array<juce::Label, 8> macroLabels;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };

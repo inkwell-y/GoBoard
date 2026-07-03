@@ -13,60 +13,68 @@ public:
 
     void runTest() override
     {
-        beginTest("empty board returns neutral defaults");
+        beginTest("empty board returns zero densities");
 
         BoardState emptyBoard;
         const auto emptyValues = MappingEngine::mapBoardState(emptyBoard);
 
-        expectWithinAbsoluteError(emptyValues.density, 0.0f, 0.0001f);
-        expectWithinAbsoluteError(emptyValues.balance, 0.5f, 0.0001f);
-        expectWithinAbsoluteError(emptyValues.centerX, 0.5f, 0.0001f);
-        expectWithinAbsoluteError(emptyValues.centerY, 0.5f, 0.0001f);
-        expectWithinAbsoluteError(emptyValues.edge, 0.0f, 0.0001f);
-        expectWithinAbsoluteError(emptyValues.conflict, 0.0f, 0.0001f);
-        expectWithinAbsoluteError(emptyValues.symmetry, 0.0f, 0.0001f);
-        expectWithinAbsoluteError(emptyValues.cluster, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(emptyValues.blackStoneDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(emptyValues.whiteStoneDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(emptyValues.occupiedDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(emptyValues.centerAreaDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(emptyValues.topHalfDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(emptyValues.bottomHalfDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(emptyValues.leftHalfDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(emptyValues.rightHalfDensity, 0.0f, 0.0001f);
 
-        beginTest("adjacent opposite colours raise conflict and edge");
+        beginTest("single black stone updates top and left densities");
 
-        BoardState conflictBoard;
-        conflictBoard.setCell(0, 0, BoardState::CellState::Black);
-        conflictBoard.setCell(0, 1, BoardState::CellState::White);
+        BoardState blackBoard;
+        blackBoard.setCell(0, 0, BoardState::CellState::Black);
 
-        const auto conflictValues = MappingEngine::mapBoardState(conflictBoard);
+        const auto blackValues = MappingEngine::mapBoardState(blackBoard);
 
-        expectWithinAbsoluteError(conflictValues.density, 2.0f / 81.0f, 0.0001f);
-        expectWithinAbsoluteError(conflictValues.balance, 0.5f, 0.0001f);
-        expectWithinAbsoluteError(conflictValues.centerX, 0.0625f, 0.0001f);
-        expectWithinAbsoluteError(conflictValues.centerY, 0.0f, 0.0001f);
-        expectWithinAbsoluteError(conflictValues.edge, 1.0f, 0.0001f);
-        expectWithinAbsoluteError(conflictValues.conflict, 1.0f, 0.0001f);
-        expectWithinAbsoluteError(conflictValues.cluster, 0.0f, 0.0001f);
-        expectWithinAbsoluteError(conflictValues.symmetry, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(blackValues.blackStoneDensity, 1.0f / 81.0f, 0.0001f);
+        expectWithinAbsoluteError(blackValues.whiteStoneDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(blackValues.occupiedDensity, 1.0f / 81.0f, 0.0001f);
+        expectWithinAbsoluteError(blackValues.centerAreaDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(blackValues.topHalfDensity, 1.0f / 36.0f, 0.0001f);
+        expectWithinAbsoluteError(blackValues.bottomHalfDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(blackValues.leftHalfDensity, 1.0f / 36.0f, 0.0001f);
+        expectWithinAbsoluteError(blackValues.rightHalfDensity, 0.0f, 0.0001f);
 
-        beginTest("adjacent same colours raise cluster");
+        beginTest("single white stone updates bottom and right densities");
 
-        BoardState clusterBoard;
-        clusterBoard.setCell(4, 4, BoardState::CellState::Black);
-        clusterBoard.setCell(4, 5, BoardState::CellState::Black);
+        BoardState whiteBoard;
+        whiteBoard.setCell(8, 8, BoardState::CellState::White);
 
-        const auto clusterValues = MappingEngine::mapBoardState(clusterBoard);
+        const auto whiteValues = MappingEngine::mapBoardState(whiteBoard);
 
-        expectWithinAbsoluteError(clusterValues.balance, 1.0f, 0.0001f);
-        expectWithinAbsoluteError(clusterValues.conflict, 0.0f, 0.0001f);
-        expectWithinAbsoluteError(clusterValues.cluster, 1.0f, 0.0001f);
+        expectWithinAbsoluteError(whiteValues.blackStoneDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(whiteValues.whiteStoneDensity, 1.0f / 81.0f, 0.0001f);
+        expectWithinAbsoluteError(whiteValues.occupiedDensity, 1.0f / 81.0f, 0.0001f);
+        expectWithinAbsoluteError(whiteValues.centerAreaDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(whiteValues.topHalfDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(whiteValues.bottomHalfDensity, 1.0f / 36.0f, 0.0001f);
+        expectWithinAbsoluteError(whiteValues.leftHalfDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(whiteValues.rightHalfDensity, 1.0f / 36.0f, 0.0001f);
 
-        beginTest("mirrored placement increases symmetry");
+        beginTest("center stones contribute to center and occupied densities");
 
-        BoardState symmetricBoard;
-        symmetricBoard.setCell(2, 1, BoardState::CellState::Black);
-        symmetricBoard.setCell(2, 7, BoardState::CellState::Black);
+        BoardState centerBoard;
+        centerBoard.setCell(4, 4, BoardState::CellState::Black);
+        centerBoard.setCell(3, 5, BoardState::CellState::White);
 
-        const auto symmetricValues = MappingEngine::mapBoardState(symmetricBoard);
+        const auto centerValues = MappingEngine::mapBoardState(centerBoard);
 
-        expectWithinAbsoluteError(symmetricValues.centerX, 0.5f, 0.0001f);
-        expectWithinAbsoluteError(symmetricValues.centerY, 0.25f, 0.0001f);
-        expectWithinAbsoluteError(symmetricValues.symmetry, 0.5f, 0.0001f);
+        expectWithinAbsoluteError(centerValues.blackStoneDensity, 1.0f / 81.0f, 0.0001f);
+        expectWithinAbsoluteError(centerValues.whiteStoneDensity, 1.0f / 81.0f, 0.0001f);
+        expectWithinAbsoluteError(centerValues.occupiedDensity, 2.0f / 81.0f, 0.0001f);
+        expectWithinAbsoluteError(centerValues.centerAreaDensity, 2.0f / 9.0f, 0.0001f);
+        expectWithinAbsoluteError(centerValues.topHalfDensity, 1.0f / 36.0f, 0.0001f);
+        expectWithinAbsoluteError(centerValues.bottomHalfDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(centerValues.leftHalfDensity, 0.0f, 0.0001f);
+        expectWithinAbsoluteError(centerValues.rightHalfDensity, 1.0f / 36.0f, 0.0001f);
     }
 };
 

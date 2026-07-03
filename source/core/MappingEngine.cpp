@@ -5,37 +5,20 @@
 namespace
 {
 constexpr int boardSize = BoardState::boardSize;
-constexpr float maxEdgeDistance = static_cast<float>(boardSize / 2);
-
-float normaliseCoordinate(int coordinate) noexcept
-{
-    return static_cast<float>(coordinate) / static_cast<float>(boardSize - 1);
-}
+constexpr int centerStart = 3;
+constexpr int centerEnd = 5;
+constexpr int centerAreaCellCount = 9;
+constexpr int halfAreaCellCount = 36;
 }
 
 MappingEngine::MacroValues MappingEngine::mapBoardState(const BoardState& boardState) noexcept
 {
     MacroValues values;
-
-    const auto occupiedCount = boardState.countOccupied();
-
-    if (occupiedCount == 0)
-        return values;
-
-    const auto blackCount = boardState.countBlack();
-    const auto whiteCount = boardState.countWhite();
-
-    values.density = clamp01(static_cast<float>(occupiedCount) / static_cast<float>(BoardState::numCells));
-    values.balance = clamp01(0.5f + (0.5f * static_cast<float>(blackCount - whiteCount) / static_cast<float>(occupiedCount)));
-
-    float totalX = 0.0f;
-    float totalY = 0.0f;
-    float totalEdge = 0.0f;
-    int occupiedNeighbourPairs = 0;
-    int oppositeNeighbourPairs = 0;
-    int sameColourNeighbourPairs = 0;
-    int horizontalMirrorMatches = 0;
-    int verticalMirrorMatches = 0;
+    int centerAreaOccupiedCount = 0;
+    int topHalfOccupiedCount = 0;
+    int bottomHalfOccupiedCount = 0;
+    int leftHalfOccupiedCount = 0;
+    int rightHalfOccupiedCount = 0;
 
     for (int row = 0; row < boardSize; ++row)
     {
@@ -46,62 +29,29 @@ MappingEngine::MacroValues MappingEngine::mapBoardState(const BoardState& boardS
             if (cell == BoardState::CellState::Empty)
                 continue;
 
-            totalX += normaliseCoordinate(column);
-            totalY += normaliseCoordinate(row);
+            if (row >= centerStart && row <= centerEnd && column >= centerStart && column <= centerEnd)
+                ++centerAreaOccupiedCount;
 
-            const auto distanceToEdge = std::min({ row, column, (boardSize - 1) - row, (boardSize - 1) - column });
-            totalEdge += 1.0f - (static_cast<float>(distanceToEdge) / maxEdgeDistance);
+            if (row < boardSize / 2)
+                ++topHalfOccupiedCount;
+            else if (row > boardSize / 2)
+                ++bottomHalfOccupiedCount;
 
-            if (boardState.getCell(row, boardSize - 1 - column) == cell)
-                ++horizontalMirrorMatches;
-
-            if (boardState.getCell(boardSize - 1 - row, column) == cell)
-                ++verticalMirrorMatches;
-
-            if (column + 1 < boardSize)
-            {
-                const auto neighbour = boardState.getCell(row, column + 1);
-
-                if (neighbour != BoardState::CellState::Empty)
-                {
-                    ++occupiedNeighbourPairs;
-
-                    if (neighbour == cell)
-                        ++sameColourNeighbourPairs;
-                    else
-                        ++oppositeNeighbourPairs;
-                }
-            }
-
-            if (row + 1 < boardSize)
-            {
-                const auto neighbour = boardState.getCell(row + 1, column);
-
-                if (neighbour != BoardState::CellState::Empty)
-                {
-                    ++occupiedNeighbourPairs;
-
-                    if (neighbour == cell)
-                        ++sameColourNeighbourPairs;
-                    else
-                        ++oppositeNeighbourPairs;
-                }
-            }
+            if (column < boardSize / 2)
+                ++leftHalfOccupiedCount;
+            else if (column > boardSize / 2)
+                ++rightHalfOccupiedCount;
         }
     }
 
-    values.centerX = clamp01(totalX / static_cast<float>(occupiedCount));
-    values.centerY = clamp01(totalY / static_cast<float>(occupiedCount));
-    values.edge = clamp01(totalEdge / static_cast<float>(occupiedCount));
-    values.symmetry = clamp01(0.5f * ((static_cast<float>(horizontalMirrorMatches) / static_cast<float>(occupiedCount))
-                                    + (static_cast<float>(verticalMirrorMatches) / static_cast<float>(occupiedCount))));
-
-    if (occupiedNeighbourPairs > 0)
-    {
-        const auto pairCount = static_cast<float>(occupiedNeighbourPairs);
-        values.conflict = clamp01(static_cast<float>(oppositeNeighbourPairs) / pairCount);
-        values.cluster = clamp01(static_cast<float>(sameColourNeighbourPairs) / pairCount);
-    }
+    values.blackStoneDensity = clamp01(static_cast<float>(boardState.countBlack()) / static_cast<float>(BoardState::numCells));
+    values.whiteStoneDensity = clamp01(static_cast<float>(boardState.countWhite()) / static_cast<float>(BoardState::numCells));
+    values.occupiedDensity = clamp01(static_cast<float>(boardState.countOccupied()) / static_cast<float>(BoardState::numCells));
+    values.centerAreaDensity = clamp01(static_cast<float>(centerAreaOccupiedCount) / static_cast<float>(centerAreaCellCount));
+    values.topHalfDensity = clamp01(static_cast<float>(topHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
+    values.bottomHalfDensity = clamp01(static_cast<float>(bottomHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
+    values.leftHalfDensity = clamp01(static_cast<float>(leftHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
+    values.rightHalfDensity = clamp01(static_cast<float>(rightHalfOccupiedCount) / static_cast<float>(halfAreaCellCount));
 
     return values;
 }
