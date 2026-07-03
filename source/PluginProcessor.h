@@ -4,6 +4,7 @@
 #include "core/MappingEngine.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_osc/juce_osc.h>
 #include <array>
 
 class PluginProcessor : public juce::AudioProcessor
@@ -42,13 +43,18 @@ public:
 
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    bool ensureOscConnected();
     void queueMacroMidiMessages(const MappingEngine::MacroValues&);
+    void sendMacroOscMessages(const MappingEngine::MacroValues&);
 
     juce::AudioProcessorValueTreeState state;
     BoardState boardState;
     juce::CriticalSection pendingMidiLock;
     juce::MidiBuffer pendingMidiMessages;
     std::array<int, 8> lastMacroMidiValues { -1, -1, -1, -1, -1, -1, -1, -1 };
+    juce::OSCSender oscSender;
+    bool oscConnected = false;
+    std::array<float, 8> lastMacroOscValues { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };

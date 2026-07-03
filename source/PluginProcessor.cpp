@@ -1,18 +1,26 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+namespace
+{
+constexpr const char* oscHost = "127.0.0.1";
+constexpr int oscPort = 9000;
+}
+
 PluginProcessor::PluginProcessor()
     : juce::AudioProcessor(BusesProperties()
                                .withInput("Input", juce::AudioChannelSet::stereo(), true)
                                .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       state(*this, nullptr, "STATE", createParameterLayout())
 {
+    ensureOscConnected();
     boardStateChanged();
 }
 
 void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     juce::ignoreUnused(sampleRate, samplesPerBlock);
+    ensureOscConnected();
 }
 
 void PluginProcessor::releaseResources()
@@ -133,12 +141,23 @@ const BoardState& PluginProcessor::getBoardState() const noexcept
 
 void PluginProcessor::boardStateChanged()
 {
-    queueMacroMidiMessages(MappingEngine::mapBoardState(boardState));
+    const auto macroValues = MappingEngine::mapBoardState(boardState);
+    queueMacroMidiMessages(macroValues);
+    sendMacroOscMessages(macroValues);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParameterLayout()
 {
     return {};
+}
+
+bool PluginProcessor::ensureOscConnected()
+{
+    if (oscConnected)
+        return true;
+
+    oscConnected = oscSender.connect(oscHost, oscPort);
+    return oscConnected;
 }
 
 void PluginProcessor::queueMacroMidiMessages(const MappingEngine::MacroValues& values)
@@ -165,6 +184,39 @@ void PluginProcessor::queueMacroMidiMessages(const MappingEngine::MacroValues& v
 
         lastMacroMidiValues[index] = midiValue;
         pendingMidiMessages.addEvent(juce::MidiMessage::controllerEvent(1, 20 + static_cast<int>(index), midiValue), 0);
+    }
+}
+
+void PluginProcessor::sendMacroOscMessages(const MappingEngine::MacroValues& values)
+{
+    if (! ensureOscConnected())
+        return;
+
+    const std::array<float, 8> macroValues {
+        values.blackStoneDensity,
+        values.whiteStoneDensity,
+        values.occupiedDensity,
+        values.centerAreaDensity,
+        values.topHalfDensity,
+        values.bottomHalfDensity,
+        values.leftHalfDensity,
+        values.rightHalfDensity
+    };
+
+    for (std::size_t index = 0; index < macroValues.size(); ++index)
+    {
+        if (juce::approximatelyEqual(macroValues[index], lastMacroOscValues[index]))
+            continue;
+
+        const auto address = juce::String("/goboard/macro/") + juce::String(static_cast<int>(index + 1));
+
+        if (! oscSender.send(address, macroValues[index]))
+        {
+            oscConnected = false;
+            return;
+        }
+
+        lastMacroOscValues[index] = macroValues[index];
     }
 }
 

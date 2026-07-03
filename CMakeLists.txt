@@ -58,11 +58,15 @@ target_link_libraries(SharedCode
     juce::juce_audio_processors
     juce::juce_audio_utils
     juce::juce_gui_extra
+    juce::juce_osc
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags)
 
-target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
+target_link_libraries("${PROJECT_NAME}"
+    PRIVATE
+    SharedCode
+    juce::juce_osc)
 
 if (BUILD_TESTING)
     add_executable(GoBoardControllerTests
