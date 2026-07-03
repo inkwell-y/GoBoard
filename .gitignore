@@ -1,0 +1,27 @@
+# Build folders
+build/
+build-*/
+cmake-build-*/
+
+# macOS
+.DS_Store
+
+# Xcode user files
+*.xcuserstate
+xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# IDE
+.vscode/
+.idea/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Plugin artefacts
+*.vst3
+*.component
+*.app
