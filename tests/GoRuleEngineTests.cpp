@@ -146,6 +146,63 @@ public:
 
         expect(boardState.getCell(4, 4) == BoardState::CellState::Empty);
         expect(boardState.getCell(4, 5) == BoardState::CellState::Empty);
+
+        beginTest("a fully surrounded point is illegal if it captures nothing");
+
+        gameState.reset();
+        boardState.setCell(3, 4, BoardState::CellState::White);
+        boardState.setCell(4, 3, BoardState::CellState::White);
+        boardState.setCell(5, 4, BoardState::CellState::White);
+        boardState.setCell(4, 5, BoardState::CellState::White);
+
+        const auto suicideMove = ruleEngine.playMove({ 4, 4 });
+        expect(!suicideMove.legal);
+        expect(suicideMove.reason == MoveFailureReason::Suicide);
+        expect(boardState.getCell(4, 4) == BoardState::CellState::Empty);
+        expect(boardState.countOccupied() == 4);
+
+        beginTest("a move that captures first is legal even if the point had no liberties before capture");
+
+        gameState.reset();
+        boardState.setCell(3, 4, BoardState::CellState::White);
+        boardState.setCell(4, 3, BoardState::CellState::White);
+        boardState.setCell(5, 4, BoardState::CellState::White);
+        boardState.setCell(4, 5, BoardState::CellState::White);
+        boardState.setCell(2, 4, BoardState::CellState::Black);
+        boardState.setCell(3, 3, BoardState::CellState::Black);
+        boardState.setCell(3, 5, BoardState::CellState::Black);
+        boardState.setCell(4, 2, BoardState::CellState::Black);
+        boardState.setCell(5, 3, BoardState::CellState::Black);
+        boardState.setCell(6, 4, BoardState::CellState::Black);
+        boardState.setCell(5, 5, BoardState::CellState::Black);
+        boardState.setCell(4, 6, BoardState::CellState::Black);
+
+        const auto captureEscapeMove = ruleEngine.playMove({ 4, 4 });
+        expect(captureEscapeMove.legal);
+        expect(boardState.getCell(4, 4) == BoardState::CellState::Black);
+        expect(boardState.getCell(3, 4) == BoardState::CellState::Empty);
+        expect(boardState.getCell(4, 3) == BoardState::CellState::Empty);
+        expect(boardState.getCell(5, 4) == BoardState::CellState::Empty);
+        expect(boardState.getCell(4, 5) == BoardState::CellState::Empty);
+        expect(gameState.getCurrentTurn() == BoardState::CellState::White);
+
+        beginTest("illegal suicide reverts board state and does not switch turn");
+
+        gameState.reset();
+        boardState.setCell(3, 4, BoardState::CellState::White);
+        boardState.setCell(4, 3, BoardState::CellState::White);
+        boardState.setCell(5, 4, BoardState::CellState::White);
+        boardState.setCell(4, 5, BoardState::CellState::White);
+        const auto occupiedBeforeSuicide = boardState.countOccupied();
+
+        const auto revertedMove = ruleEngine.playMove({ 4, 4 });
+        expect(!revertedMove.legal);
+        expect(boardState.countOccupied() == occupiedBeforeSuicide);
+        expect(boardState.getCell(3, 4) == BoardState::CellState::White);
+        expect(boardState.getCell(4, 3) == BoardState::CellState::White);
+        expect(boardState.getCell(5, 4) == BoardState::CellState::White);
+        expect(boardState.getCell(4, 5) == BoardState::CellState::White);
+        expect(gameState.getCurrentTurn() == BoardState::CellState::Black);
     }
 };
 

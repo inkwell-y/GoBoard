@@ -23,7 +23,8 @@ enum class MoveFailureReason
 {
     None,
     OutOfBounds,
-    OccupiedIntersection
+    OccupiedIntersection,
+    Suicide
 };
 
 struct MoveResult

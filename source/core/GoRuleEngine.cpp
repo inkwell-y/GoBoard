@@ -124,6 +124,7 @@ MoveResult GoRuleEngine::playMove(BoardPosition position) noexcept
 
     auto& boardState = gameState.getBoardState();
     const auto currentPlayer = gameState.getCurrentTurn();
+    const auto previousBoardState = boardState;
 
     if (boardState.getCell(position.row, position.column) != BoardState::CellState::Empty)
         return { false, MoveFailureReason::OccupiedIntersection };
@@ -145,6 +146,14 @@ MoveResult GoRuleEngine::playMove(BoardPosition position) noexcept
 
         if (countLiberties(opponentGroup) == 0)
             removeGroup(opponentGroup);
+    }
+
+    const auto ownGroup = getGroup(position);
+
+    if (countLiberties(ownGroup) == 0)
+    {
+        boardState = previousBoardState;
+        return { false, MoveFailureReason::Suicide };
     }
 
     gameState.advanceTurn();
