@@ -31,6 +31,12 @@ PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
     oscStatusLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(oscStatusLabel);
 
+    passButton.onClick = [this]
+    {
+        boardComponent.passTurn();
+    };
+    addAndMakeVisible(passButton);
+
     resetButton.onClick = [this]
     {
         boardComponent.resetGame();
@@ -77,7 +83,9 @@ void PluginEditor::resized()
     titleLabel.setBounds(bounds.removeFromTop(56));
     bounds.removeFromTop(12);
     auto controls = bounds.removeFromTop(32);
-    turnLabel.setBounds(controls.removeFromLeft(controls.getWidth() - 120));
+    turnLabel.setBounds(controls.removeFromLeft(controls.getWidth() - 228));
+    passButton.setBounds(controls.removeFromRight(100));
+    controls.removeFromRight(8);
     resetButton.setBounds(controls.removeFromRight(100));
     bounds.removeFromTop(8);
     oscStatusLabel.setBounds(bounds.removeFromTop(24));
@@ -98,7 +106,8 @@ void PluginEditor::resized()
 
 void PluginEditor::updateTurnLabel()
 {
-    turnLabel.setText("Current turn: " + boardComponent.getCurrentTurnText(), juce::dontSendNotification);
+    turnLabel.setText(boardComponent.getStatusText(), juce::dontSendNotification);
+    passButton.setEnabled(!boardComponent.isGameOver());
 }
 
 void PluginEditor::updateMacroLabels()

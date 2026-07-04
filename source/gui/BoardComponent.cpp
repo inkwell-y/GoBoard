@@ -28,9 +28,38 @@ BoardState::CellState BoardComponent::getCurrentTurn() const noexcept
     return gameState.getCurrentTurn();
 }
 
+bool BoardComponent::isGameOver() const noexcept
+{
+    return gameState.isGameOver();
+}
+
 juce::String BoardComponent::getCurrentTurnText() const
 {
     return getCurrentTurn() == BoardState::CellState::Black ? "Black" : "White";
+}
+
+juce::String BoardComponent::getStatusText() const
+{
+    if (gameState.isGameOver())
+        return "Game over after two consecutive passes";
+
+    if (gameState.getConsecutivePasses() > 0)
+        return "Current turn: " + getCurrentTurnText() + " (1 pass)";
+
+    return "Current turn: " + getCurrentTurnText();
+}
+
+void BoardComponent::passTurn()
+{
+    const auto result = goRuleEngine.passTurn();
+
+    if (!result.legal)
+        return;
+
+    repaint();
+
+    if (onGameStateChanged)
+        onGameStateChanged();
 }
 
 void BoardComponent::resetGame()
@@ -56,6 +85,9 @@ void BoardComponent::paint(juce::Graphics& g)
 void BoardComponent::mouseDown(const juce::MouseEvent& event)
 {
     if (!event.mods.isLeftButtonDown())
+        return;
+
+    if (gameState.isGameOver())
         return;
 
     const auto cell = getCellAtPosition(event.position);

@@ -12,7 +12,10 @@ public:
     BoardComponent(GameState&, GoRuleEngine&);
 
     BoardState::CellState getCurrentTurn() const noexcept;
+    bool isGameOver() const noexcept;
     juce::String getCurrentTurnText() const;
+    juce::String getStatusText() const;
+    void passTurn();
     void resetGame();
 
     void paint(juce::Graphics&) override;

@@ -240,6 +240,50 @@ public:
         expect(boardState.getCell(1, 1) == BoardState::CellState::Black);
         expect(boardState.getCell(1, 2) == BoardState::CellState::Empty);
         expect(gameState.getCurrentTurn() == BoardState::CellState::White);
+
+        beginTest("one pass switches turn and does not end the game");
+
+        gameState.reset();
+        const auto firstPass = ruleEngine.passTurn();
+        expect(firstPass.legal);
+        expect(gameState.getCurrentTurn() == BoardState::CellState::White);
+        expect(gameState.getConsecutivePasses() == 1);
+        expect(gameState.getGameStatus() == GameStatus::Playing);
+        expect(!gameState.isGameOver());
+
+        beginTest("two consecutive passes enter game over");
+
+        const auto secondPass = ruleEngine.passTurn();
+        expect(secondPass.legal);
+        expect(gameState.getCurrentTurn() == BoardState::CellState::Black);
+        expect(gameState.getConsecutivePasses() == 2);
+        expect(gameState.getGameStatus() == GameStatus::GameOver);
+        expect(gameState.isGameOver());
+
+        beginTest("a normal move after one pass resets consecutive passes");
+
+        gameState.reset();
+        expect(ruleEngine.passTurn().legal);
+        const auto moveAfterPass = ruleEngine.playMove({ 4, 4 });
+        expect(moveAfterPass.legal);
+        expect(gameState.getConsecutivePasses() == 0);
+        expect(gameState.getCurrentTurn() == BoardState::CellState::Black);
+        expect(gameState.getGameStatus() == GameStatus::Playing);
+
+        beginTest("reset exits game over and reinitializes history");
+
+        gameState.reset();
+        expect(ruleEngine.passTurn().legal);
+        expect(ruleEngine.passTurn().legal);
+        expect(gameState.isGameOver());
+
+        gameState.reset();
+        expect(!gameState.isGameOver());
+        expect(gameState.getGameStatus() == GameStatus::Playing);
+        expect(gameState.getCurrentTurn() == BoardState::CellState::Black);
+        expect(gameState.getConsecutivePasses() == 0);
+        expect(gameState.getBoardHistorySize() == 1);
+        expect(boardState.countOccupied() == 0);
     }
 };
 

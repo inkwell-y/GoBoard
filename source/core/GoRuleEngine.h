@@ -20,13 +20,20 @@ struct BoardPosition
     }
 };
 
+enum class GameStatus
+{
+    Playing,
+    GameOver
+};
+
 enum class MoveFailureReason
 {
     None,
     OutOfBounds,
     OccupiedIntersection,
     Suicide,
-    RepeatedBoardPosition
+    RepeatedBoardPosition,
+    GameAlreadyOver
 };
 
 struct MoveResult
@@ -43,9 +50,14 @@ public:
     BoardState& getBoardState() noexcept;
     const BoardState& getBoardState() const noexcept;
     BoardState::CellState getCurrentTurn() const noexcept;
+    GameStatus getGameStatus() const noexcept;
+    int getConsecutivePasses() const noexcept;
+    bool isGameOver() const noexcept;
     std::size_t getBoardHistorySize() const noexcept;
     bool hasSeenCurrentBoardPosition() const noexcept;
     void recordCurrentBoardPosition() noexcept;
+    void registerPass() noexcept;
+    void resetConsecutivePasses() noexcept;
     void reset() noexcept;
     void advanceTurn() noexcept;
 
@@ -55,6 +67,8 @@ private:
 
     BoardState& boardState;
     BoardState::CellState currentTurn = BoardState::CellState::Black;
+    GameStatus gameStatus = GameStatus::Playing;
+    int consecutivePasses = 0;
     std::unordered_set<std::size_t> boardHistory;
 };
 
@@ -66,6 +80,7 @@ public:
     std::vector<BoardPosition> neighbors(BoardPosition) const noexcept;
     std::vector<BoardPosition> getGroup(BoardPosition) const;
     int countLiberties(const std::vector<BoardPosition>& group) const noexcept;
+    MoveResult passTurn() noexcept;
     MoveResult playMove(BoardPosition) noexcept;
 
 private:

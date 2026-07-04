@@ -24,6 +24,21 @@ BoardState::CellState GameState::getCurrentTurn() const noexcept
     return currentTurn;
 }
 
+GameStatus GameState::getGameStatus() const noexcept
+{
+    return gameStatus;
+}
+
+int GameState::getConsecutivePasses() const noexcept
+{
+    return consecutivePasses;
+}
+
+bool GameState::isGameOver() const noexcept
+{
+    return gameStatus == GameStatus::GameOver;
+}
+
 std::size_t GameState::getBoardHistorySize() const noexcept
 {
     return boardHistory.size();
@@ -39,10 +54,25 @@ void GameState::recordCurrentBoardPosition() noexcept
     boardHistory.insert(computeCurrentBoardHash());
 }
 
+void GameState::registerPass() noexcept
+{
+    ++consecutivePasses;
+
+    if (consecutivePasses >= 2)
+        gameStatus = GameStatus::GameOver;
+}
+
+void GameState::resetConsecutivePasses() noexcept
+{
+    consecutivePasses = 0;
+}
+
 void GameState::reset() noexcept
 {
     boardState.clear();
     currentTurn = BoardState::CellState::Black;
+    gameStatus = GameStatus::Playing;
+    consecutivePasses = 0;
     clearHistoryAndRecordCurrentBoard();
 }
 
@@ -127,8 +157,21 @@ int GoRuleEngine::countLiberties(const std::vector<BoardPosition>& group) const 
     return static_cast<int>(liberties.size());
 }
 
+MoveResult GoRuleEngine::passTurn() noexcept
+{
+    if (gameState.isGameOver())
+        return { false, MoveFailureReason::GameAlreadyOver };
+
+    gameState.registerPass();
+    gameState.advanceTurn();
+    return { true, MoveFailureReason::None };
+}
+
 MoveResult GoRuleEngine::playMove(BoardPosition position) noexcept
 {
+    if (gameState.isGameOver())
+        return { false, MoveFailureReason::GameAlreadyOver };
+
     if (!isValidPosition(position))
         return { false, MoveFailureReason::OutOfBounds };
 
@@ -172,6 +215,7 @@ MoveResult GoRuleEngine::playMove(BoardPosition position) noexcept
         return { false, MoveFailureReason::RepeatedBoardPosition };
     }
 
+    gameState.resetConsecutivePasses();
     gameState.recordCurrentBoardPosition();
     gameState.advanceTurn();
     return { true, MoveFailureReason::None };
