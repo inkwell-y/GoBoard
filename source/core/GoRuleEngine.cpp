@@ -6,6 +6,7 @@
 GameState::GameState(BoardState& state)
     : boardState(state)
 {
+    clearHistoryAndRecordCurrentBoard();
 }
 
 BoardState& GameState::getBoardState() noexcept
@@ -23,17 +24,26 @@ BoardState::CellState GameState::getCurrentTurn() const noexcept
     return currentTurn;
 }
 
+std::size_t GameState::getBoardHistorySize() const noexcept
+{
+    return boardHistory.size();
+}
+
+bool GameState::hasSeenCurrentBoardPosition() const noexcept
+{
+    return boardHistory.find(computeCurrentBoardHash()) != boardHistory.end();
+}
+
+void GameState::recordCurrentBoardPosition() noexcept
+{
+    boardHistory.insert(computeCurrentBoardHash());
+}
+
 void GameState::reset() noexcept
 {
     boardState.clear();
     currentTurn = BoardState::CellState::Black;
-}
-
-void GameState::advanceTurn() noexcept
-{
-    currentTurn = currentTurn == BoardState::CellState::Black
-                    ? BoardState::CellState::White
-                    : BoardState::CellState::Black;
+    clearHistoryAndRecordCurrentBoard();
 }
 
 GoRuleEngine::GoRuleEngine(GameState& state)
@@ -156,6 +166,13 @@ MoveResult GoRuleEngine::playMove(BoardPosition position) noexcept
         return { false, MoveFailureReason::Suicide };
     }
 
+    if (gameState.hasSeenCurrentBoardPosition())
+    {
+        boardState = previousBoardState;
+        return { false, MoveFailureReason::RepeatedBoardPosition };
+    }
+
+    gameState.recordCurrentBoardPosition();
     gameState.advanceTurn();
     return { true, MoveFailureReason::None };
 }
@@ -185,4 +202,34 @@ void GoRuleEngine::removeGroup(const std::vector<BoardPosition>& group) noexcept
 
     for (const auto position : group)
         boardState.setCell(position.row, position.column, BoardState::CellState::Empty);
+}
+
+void GameState::advanceTurn() noexcept
+{
+    currentTurn = currentTurn == BoardState::CellState::Black
+                    ? BoardState::CellState::White
+                    : BoardState::CellState::Black;
+}
+
+std::size_t GameState::computeCurrentBoardHash() const noexcept
+{
+    std::size_t hash = 1469598103934665603ull;
+
+    for (int row = 0; row < BoardState::boardSize; ++row)
+    {
+        for (int column = 0; column < BoardState::boardSize; ++column)
+        {
+            const auto cellValue = static_cast<std::size_t>(boardState.getCell(row, column));
+            hash ^= cellValue + 1u;
+            hash *= 1099511628211ull;
+        }
+    }
+
+    return hash;
+}
+
+void GameState::clearHistoryAndRecordCurrentBoard() noexcept
+{
+    boardHistory.clear();
+    recordCurrentBoardPosition();
 }

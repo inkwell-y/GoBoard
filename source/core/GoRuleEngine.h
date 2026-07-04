@@ -2,6 +2,7 @@
 
 #include "BoardState.h"
 
+#include <unordered_set>
 #include <vector>
 
 struct BoardPosition
@@ -24,7 +25,8 @@ enum class MoveFailureReason
     None,
     OutOfBounds,
     OccupiedIntersection,
-    Suicide
+    Suicide,
+    RepeatedBoardPosition
 };
 
 struct MoveResult
@@ -41,12 +43,19 @@ public:
     BoardState& getBoardState() noexcept;
     const BoardState& getBoardState() const noexcept;
     BoardState::CellState getCurrentTurn() const noexcept;
+    std::size_t getBoardHistorySize() const noexcept;
+    bool hasSeenCurrentBoardPosition() const noexcept;
+    void recordCurrentBoardPosition() noexcept;
     void reset() noexcept;
     void advanceTurn() noexcept;
 
 private:
+    std::size_t computeCurrentBoardHash() const noexcept;
+    void clearHistoryAndRecordCurrentBoard() noexcept;
+
     BoardState& boardState;
     BoardState::CellState currentTurn = BoardState::CellState::Black;
+    std::unordered_set<std::size_t> boardHistory;
 };
 
 class GoRuleEngine

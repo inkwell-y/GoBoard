@@ -15,21 +15,27 @@ public:
 
     void runTest() override
     {
-        beginTest("black plays first and legal moves alternate turns");
+        beginTest("reset initializes history with the empty board");
 
         BoardState boardState;
         GameState gameState(boardState);
         GoRuleEngine ruleEngine(gameState);
 
+        expect(gameState.getBoardHistorySize() == 1);
+
+        beginTest("black plays first and legal moves alternate turns");
+
         const auto blackMove = ruleEngine.playMove({ 0, 0 });
         expect(blackMove.legal);
         expect(boardState.getCell(0, 0) == BoardState::CellState::Black);
         expect(gameState.getCurrentTurn() == BoardState::CellState::White);
+        expect(gameState.getBoardHistorySize() == 2);
 
         const auto whiteMove = ruleEngine.playMove({ 0, 1 });
         expect(whiteMove.legal);
         expect(boardState.getCell(0, 1) == BoardState::CellState::White);
         expect(gameState.getCurrentTurn() == BoardState::CellState::Black);
+        expect(gameState.getBoardHistorySize() == 3);
 
         beginTest("occupied intersections are illegal and do not change turn");
 
@@ -37,12 +43,14 @@ public:
         expect(!occupiedMove.legal);
         expect(occupiedMove.reason == MoveFailureReason::OccupiedIntersection);
         expect(gameState.getCurrentTurn() == BoardState::CellState::Black);
+        expect(gameState.getBoardHistorySize() == 3);
 
         beginTest("reset clears the board and restores black to move");
 
         gameState.reset();
         expect(boardState.countOccupied() == 0);
         expect(gameState.getCurrentTurn() == BoardState::CellState::Black);
+        expect(gameState.getBoardHistorySize() == 1);
 
         beginTest("single center stone has 4 liberties");
 
@@ -203,6 +211,35 @@ public:
         expect(boardState.getCell(5, 4) == BoardState::CellState::White);
         expect(boardState.getCell(4, 5) == BoardState::CellState::White);
         expect(gameState.getCurrentTurn() == BoardState::CellState::Black);
+
+        beginTest("a repeated board position is rejected and does not switch turn");
+
+        gameState.reset();
+        expect(ruleEngine.playMove({ 8, 8 }).legal);
+        expect(ruleEngine.playMove({ 1, 0 }).legal);
+        expect(ruleEngine.playMove({ 0, 2 }).legal);
+        expect(ruleEngine.playMove({ 0, 1 }).legal);
+        expect(ruleEngine.playMove({ 1, 3 }).legal);
+        expect(ruleEngine.playMove({ 2, 1 }).legal);
+        expect(ruleEngine.playMove({ 2, 2 }).legal);
+        expect(ruleEngine.playMove({ 1, 2 }).legal);
+
+        const auto historyBeforeCapture = gameState.getBoardHistorySize();
+        const auto blackKoCapture = ruleEngine.playMove({ 1, 1 });
+        expect(blackKoCapture.legal);
+        expect(gameState.getBoardHistorySize() == historyBeforeCapture + 1);
+        expect(boardState.getCell(1, 1) == BoardState::CellState::Black);
+        expect(boardState.getCell(1, 2) == BoardState::CellState::Empty);
+        expect(gameState.getCurrentTurn() == BoardState::CellState::White);
+
+        const auto historyBeforeRecapture = gameState.getBoardHistorySize();
+        const auto whiteKoRecapture = ruleEngine.playMove({ 1, 2 });
+        expect(!whiteKoRecapture.legal);
+        expect(whiteKoRecapture.reason == MoveFailureReason::RepeatedBoardPosition);
+        expect(gameState.getBoardHistorySize() == historyBeforeRecapture);
+        expect(boardState.getCell(1, 1) == BoardState::CellState::Black);
+        expect(boardState.getCell(1, 2) == BoardState::CellState::Empty);
+        expect(gameState.getCurrentTurn() == BoardState::CellState::White);
     }
 };
 
