@@ -1,15 +1,7 @@
 #include "GoRuleEngine.h"
 
-namespace
-{
-bool isValidPosition(BoardPosition position) noexcept
-{
-    return position.row >= 0
-        && position.row < BoardState::boardSize
-        && position.column >= 0
-        && position.column < BoardState::boardSize;
-}
-}
+#include <queue>
+#include <set>
 
 GameState::GameState(BoardState& state)
     : boardState(state)
@@ -49,6 +41,82 @@ GoRuleEngine::GoRuleEngine(GameState& state)
 {
 }
 
+std::vector<BoardPosition> GoRuleEngine::neighbors(BoardPosition position) const noexcept
+{
+    std::vector<BoardPosition> adjacentPositions;
+    adjacentPositions.reserve(4);
+
+    for (const auto candidate : {
+             BoardPosition { position.row - 1, position.column },
+             BoardPosition { position.row + 1, position.column },
+             BoardPosition { position.row, position.column - 1 },
+             BoardPosition { position.row, position.column + 1 } })
+    {
+        if (isValidPosition(candidate))
+            adjacentPositions.push_back(candidate);
+    }
+
+    return adjacentPositions;
+}
+
+std::vector<BoardPosition> GoRuleEngine::getGroup(BoardPosition startPosition) const
+{
+    std::vector<BoardPosition> group;
+
+    if (!isValidPosition(startPosition))
+        return group;
+
+    const auto& boardState = gameState.getBoardState();
+    const auto targetColour = boardState.getCell(startPosition.row, startPosition.column);
+
+    if (targetColour == BoardState::CellState::Empty)
+        return group;
+
+    std::queue<BoardPosition> positionsToVisit;
+    std::set<BoardPosition> visited;
+
+    positionsToVisit.push(startPosition);
+    visited.insert(startPosition);
+
+    while (!positionsToVisit.empty())
+    {
+        const auto current = positionsToVisit.front();
+        positionsToVisit.pop();
+        group.push_back(current);
+
+        for (const auto neighbor : neighbors(current))
+        {
+            if (visited.find(neighbor) != visited.end())
+                continue;
+
+            if (boardState.getCell(neighbor.row, neighbor.column) != targetColour)
+                continue;
+
+            visited.insert(neighbor);
+            positionsToVisit.push(neighbor);
+        }
+    }
+
+    return group;
+}
+
+int GoRuleEngine::countLiberties(const std::vector<BoardPosition>& group) const noexcept
+{
+    std::set<BoardPosition> liberties;
+    const auto& boardState = gameState.getBoardState();
+
+    for (const auto position : group)
+    {
+        for (const auto neighbor : neighbors(position))
+        {
+            if (boardState.getCell(neighbor.row, neighbor.column) == BoardState::CellState::Empty)
+                liberties.insert(neighbor);
+        }
+    }
+
+    return static_cast<int>(liberties.size());
+}
+
 MoveResult GoRuleEngine::playMove(BoardPosition position) noexcept
 {
     if (!isValidPosition(position))
@@ -62,4 +130,12 @@ MoveResult GoRuleEngine::playMove(BoardPosition position) noexcept
     boardState.setCell(position.row, position.column, gameState.getCurrentTurn());
     gameState.advanceTurn();
     return { true, MoveFailureReason::None };
+}
+
+bool GoRuleEngine::isValidPosition(BoardPosition position) noexcept
+{
+    return position.row >= 0
+        && position.row < BoardState::boardSize
+        && position.column >= 0
+        && position.column < BoardState::boardSize;
 }

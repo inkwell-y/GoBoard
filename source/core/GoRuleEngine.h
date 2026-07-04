@@ -2,10 +2,21 @@
 
 #include "BoardState.h"
 
+#include <vector>
+
 struct BoardPosition
 {
     int row = 0;
     int column = 0;
+
+    bool operator==(const BoardPosition& other) const noexcept = default;
+    bool operator<(const BoardPosition& other) const noexcept
+    {
+        if (row != other.row)
+            return row < other.row;
+
+        return column < other.column;
+    }
 };
 
 enum class MoveFailureReason
@@ -42,8 +53,13 @@ class GoRuleEngine
 public:
     explicit GoRuleEngine(GameState&);
 
+    std::vector<BoardPosition> neighbors(BoardPosition) const noexcept;
+    std::vector<BoardPosition> getGroup(BoardPosition) const;
+    int countLiberties(const std::vector<BoardPosition>& group) const noexcept;
     MoveResult playMove(BoardPosition) noexcept;
 
 private:
+    static bool isValidPosition(BoardPosition) noexcept;
+
     GameState& gameState;
 };

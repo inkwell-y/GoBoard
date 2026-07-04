@@ -3,6 +3,8 @@
 #include "core/BoardState.h"
 #include "core/GoRuleEngine.h"
 
+#include <algorithm>
+
 class GoRuleEngineTests final : public juce::UnitTest
 {
 public:
@@ -41,6 +43,55 @@ public:
         gameState.reset();
         expect(boardState.countOccupied() == 0);
         expect(gameState.getCurrentTurn() == BoardState::CellState::Black);
+
+        beginTest("single center stone has 4 liberties");
+
+        boardState.clear();
+        boardState.setCell(4, 4, BoardState::CellState::Black);
+        expect(ruleEngine.countLiberties(ruleEngine.getGroup({ 4, 4 })) == 4);
+
+        beginTest("corner stone has 2 liberties");
+
+        boardState.clear();
+        boardState.setCell(0, 0, BoardState::CellState::Black);
+        expect(ruleEngine.countLiberties(ruleEngine.getGroup({ 0, 0 })) == 2);
+
+        beginTest("edge stone has 3 liberties");
+
+        boardState.clear();
+        boardState.setCell(0, 4, BoardState::CellState::Black);
+        expect(ruleEngine.countLiberties(ruleEngine.getGroup({ 0, 4 })) == 3);
+
+        beginTest("connected two-stone group shares liberties correctly");
+
+        boardState.clear();
+        boardState.setCell(4, 4, BoardState::CellState::Black);
+        boardState.setCell(4, 5, BoardState::CellState::Black);
+
+        const auto connectedGroup = ruleEngine.getGroup({ 4, 4 });
+        expect(connectedGroup.size() == 2);
+        expect(ruleEngine.countLiberties(connectedGroup) == 6);
+
+        beginTest("diagonal stones are not connected");
+
+        boardState.clear();
+        boardState.setCell(4, 4, BoardState::CellState::Black);
+        boardState.setCell(5, 5, BoardState::CellState::Black);
+
+        const auto diagonalGroup = ruleEngine.getGroup({ 4, 4 });
+        expect(diagonalGroup.size() == 1);
+        expect(std::find(diagonalGroup.begin(), diagonalGroup.end(), BoardPosition { 4, 4 }) != diagonalGroup.end());
+        expect(std::find(diagonalGroup.begin(), diagonalGroup.end(), BoardPosition { 5, 5 }) == diagonalGroup.end());
+
+        beginTest("neighbors include only orthogonal positions");
+
+        const auto centerNeighbors = ruleEngine.neighbors({ 4, 4 });
+        expect(centerNeighbors.size() == 4);
+        expect(std::find(centerNeighbors.begin(), centerNeighbors.end(), BoardPosition { 3, 4 }) != centerNeighbors.end());
+        expect(std::find(centerNeighbors.begin(), centerNeighbors.end(), BoardPosition { 5, 4 }) != centerNeighbors.end());
+        expect(std::find(centerNeighbors.begin(), centerNeighbors.end(), BoardPosition { 4, 3 }) != centerNeighbors.end());
+        expect(std::find(centerNeighbors.begin(), centerNeighbors.end(), BoardPosition { 4, 5 }) != centerNeighbors.end());
+        expect(std::find(centerNeighbors.begin(), centerNeighbors.end(), BoardPosition { 3, 3 }) == centerNeighbors.end());
     }
 };
 
