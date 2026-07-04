@@ -16,26 +16,26 @@ static const juce::Colour whiteStoneColour { 242, 238, 231 };
 static const juce::Colour whiteStoneOutlineColour { 168, 160, 149 };
 }
 
-BoardComponent::BoardComponent(BoardState& state)
-    : boardState(state)
+BoardComponent::BoardComponent(GameState& state, GoRuleEngine& ruleEngine)
+    : gameState(state),
+      goRuleEngine(ruleEngine)
 {
     setOpaque(true);
 }
 
 BoardState::CellState BoardComponent::getCurrentTurn() const noexcept
 {
-    return currentTurn;
+    return gameState.getCurrentTurn();
 }
 
 juce::String BoardComponent::getCurrentTurnText() const
 {
-    return currentTurn == BoardState::CellState::Black ? "Black" : "White";
+    return getCurrentTurn() == BoardState::CellState::Black ? "Black" : "White";
 }
 
 void BoardComponent::resetGame()
 {
-    boardState.clear();
-    currentTurn = BoardState::CellState::Black;
+    gameState.reset();
     repaint();
 
     if (onGameStateChanged)
@@ -66,11 +66,11 @@ void BoardComponent::mouseDown(const juce::MouseEvent& event)
     const auto row = cell->x;
     const auto column = cell->y;
 
-    if (boardState.getCell(row, column) != BoardState::CellState::Empty)
+    const auto result = goRuleEngine.playMove({ row, column });
+
+    if (!result.legal)
         return;
 
-    boardState.setCell(row, column, currentTurn);
-    advanceTurn();
     repaint();
 
     if (onGameStateChanged)
@@ -170,6 +170,8 @@ void BoardComponent::drawStarPoints(juce::Graphics& g, const BoardGeometry& geom
 
 void BoardComponent::drawStones(juce::Graphics& g, const BoardGeometry& geometry) const
 {
+    const auto& boardState = gameState.getBoardState();
+
     for (int row = 0; row < BoardState::boardSize; ++row)
     {
         for (int column = 0; column < BoardState::boardSize; ++column)
@@ -196,11 +198,4 @@ void BoardComponent::drawStones(juce::Graphics& g, const BoardGeometry& geometry
             }
         }
     }
-}
-
-void BoardComponent::advanceTurn() noexcept
-{
-    currentTurn = currentTurn == BoardState::CellState::Black
-                    ? BoardState::CellState::White
-                    : BoardState::CellState::Black;
 }

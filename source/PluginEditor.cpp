@@ -17,7 +17,7 @@ const std::array<const char*, 8> macroNames {
 PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
     : juce::AudioProcessorEditor(&pluginProcessor),
       processorRef(pluginProcessor),
-      boardComponent(processorRef.getBoardState())
+      boardComponent(processorRef.getGameState(), processorRef.getGoRuleEngine())
 {
     titleLabel.setText("Go Board Controller", juce::dontSendNotification);
     titleLabel.setJustificationType(juce::Justification::centred);

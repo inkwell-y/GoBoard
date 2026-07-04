@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/BoardState.h"
+#include "core/GoRuleEngine.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <functional>
@@ -9,7 +9,7 @@
 class BoardComponent : public juce::Component
 {
 public:
-    explicit BoardComponent(BoardState&);
+    BoardComponent(GameState&, GoRuleEngine&);
 
     BoardState::CellState getCurrentTurn() const noexcept;
     juce::String getCurrentTurnText() const;
@@ -36,10 +36,9 @@ private:
     void drawGrid(juce::Graphics&, const BoardGeometry&) const;
     void drawStarPoints(juce::Graphics&, const BoardGeometry&) const;
     void drawStones(juce::Graphics&, const BoardGeometry&) const;
-    void advanceTurn() noexcept;
 
-    BoardState& boardState;
-    BoardState::CellState currentTurn = BoardState::CellState::Black;
+    GameState& gameState;
+    GoRuleEngine& goRuleEngine;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BoardComponent)
 };

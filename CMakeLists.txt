@@ -41,6 +41,8 @@ set(SourceFiles
     source/core/ControlVector.h
     source/core/FeatureExtractor.cpp
     source/core/FeatureExtractor.h
+    source/core/GoRuleEngine.cpp
+    source/core/GoRuleEngine.h
     source/core/MappingEngine.cpp
     source/core/MappingEngine.h
     source/gui/BoardComponent.cpp
@@ -52,6 +54,8 @@ set(CoreSourceFiles
     source/core/ControlVector.h
     source/core/FeatureExtractor.cpp
     source/core/FeatureExtractor.h
+    source/core/GoRuleEngine.cpp
+    source/core/GoRuleEngine.h
     source/core/MappingEngine.cpp
     source/core/MappingEngine.h)
 
@@ -89,6 +93,7 @@ if (BUILD_TESTING)
         tests/TestMain.cpp
         tests/BoardStateTests.cpp
         tests/FeatureExtractorTests.cpp
+        tests/GoRuleEngineTests.cpp
         tests/MappingEngineTests.cpp
         ${CoreSourceFiles})
 

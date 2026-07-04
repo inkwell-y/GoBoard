@@ -12,6 +12,8 @@ PluginProcessor::PluginProcessor()
                                .withInput("Input", juce::AudioChannelSet::stereo(), true)
                                .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       state(*this, nullptr, "STATE", createParameterLayout()),
+      gameState(boardState),
+      goRuleEngine(gameState),
       mappingEngine(std::make_unique<DeterministicMappingEngine>())
 {
     ensureOscConnected();
@@ -138,6 +140,16 @@ BoardState& PluginProcessor::getBoardState() noexcept
 const BoardState& PluginProcessor::getBoardState() const noexcept
 {
     return boardState;
+}
+
+GameState& PluginProcessor::getGameState() noexcept
+{
+    return gameState;
+}
+
+GoRuleEngine& PluginProcessor::getGoRuleEngine() noexcept
+{
+    return goRuleEngine;
 }
 
 const ControlVector& PluginProcessor::getCurrentControlVector() const noexcept

@@ -3,6 +3,7 @@
 #include "core/BoardState.h"
 #include "core/ControlVector.h"
 #include "core/FeatureExtractor.h"
+#include "core/GoRuleEngine.h"
 #include "core/MappingEngine.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -42,6 +43,8 @@ public:
     juce::AudioProcessorValueTreeState& getState() noexcept;
     BoardState& getBoardState() noexcept;
     const BoardState& getBoardState() const noexcept;
+    GameState& getGameState() noexcept;
+    GoRuleEngine& getGoRuleEngine() noexcept;
     const ControlVector& getCurrentControlVector() const noexcept;
     juce::String getOscStatusText() const;
     void boardStateChanged();
@@ -55,6 +58,8 @@ private:
 
     juce::AudioProcessorValueTreeState state;
     BoardState boardState;
+    GameState gameState;
+    GoRuleEngine goRuleEngine;
     MacroFeatureExtractor::MacroFeatures currentMacroFeatures;
     ControlVector currentControlVector;
     std::unique_ptr<MappingEngine> mappingEngine;
