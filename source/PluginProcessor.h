@@ -55,7 +55,7 @@ private:
 
     juce::AudioProcessorValueTreeState state;
     BoardState boardState;
-    FeatureExtractor::BoardFeatures currentFeatures;
+    MacroFeatureExtractor::MacroFeatures currentMacroFeatures;
     ControlVector currentControlVector;
     std::unique_ptr<MappingEngine> mappingEngine;
     juce::CriticalSection pendingMidiLock;

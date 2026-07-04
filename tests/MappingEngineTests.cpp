@@ -20,7 +20,7 @@ public:
         beginTest("empty board returns zero control values");
 
         BoardState emptyBoard;
-        const auto emptyValues = mappingEngine.mapFeatures(FeatureExtractor::extract(emptyBoard));
+        const auto emptyValues = mappingEngine.mapFeatures(MacroFeatureExtractor::extract(emptyBoard));
 
         for (std::size_t index = 0; index < ControlVector::size; ++index)
             expectWithinAbsoluteError(emptyValues[index], 0.0f, 0.0001f);
@@ -30,7 +30,7 @@ public:
         BoardState blackBoard;
         blackBoard.setCell(0, 0, BoardState::CellState::Black);
 
-        const auto blackValues = mappingEngine.mapFeatures(FeatureExtractor::extract(blackBoard));
+        const auto blackValues = mappingEngine.mapFeatures(MacroFeatureExtractor::extract(blackBoard));
 
         expectWithinAbsoluteError(blackValues[ControlVector::blackStoneDensity], 1.0f / 81.0f, 0.0001f);
         expectWithinAbsoluteError(blackValues[ControlVector::whiteStoneDensity], 0.0f, 0.0001f);
@@ -46,7 +46,7 @@ public:
         BoardState whiteBoard;
         whiteBoard.setCell(8, 8, BoardState::CellState::White);
 
-        const auto whiteValues = mappingEngine.mapFeatures(FeatureExtractor::extract(whiteBoard));
+        const auto whiteValues = mappingEngine.mapFeatures(MacroFeatureExtractor::extract(whiteBoard));
 
         expectWithinAbsoluteError(whiteValues[ControlVector::blackStoneDensity], 0.0f, 0.0001f);
         expectWithinAbsoluteError(whiteValues[ControlVector::whiteStoneDensity], 1.0f / 81.0f, 0.0001f);
@@ -63,7 +63,7 @@ public:
         centerBoard.setCell(4, 4, BoardState::CellState::Black);
         centerBoard.setCell(3, 5, BoardState::CellState::White);
 
-        const auto centerValues = mappingEngine.mapFeatures(FeatureExtractor::extract(centerBoard));
+        const auto centerValues = mappingEngine.mapFeatures(MacroFeatureExtractor::extract(centerBoard));
 
         expectWithinAbsoluteError(centerValues[ControlVector::blackStoneDensity], 1.0f / 81.0f, 0.0001f);
         expectWithinAbsoluteError(centerValues[ControlVector::whiteStoneDensity], 1.0f / 81.0f, 0.0001f);

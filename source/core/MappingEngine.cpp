@@ -4,19 +4,19 @@
 
 namespace
 {
-constexpr int boardSize = FeatureExtractor::BoardFeatures::boardSize;
+constexpr int boardSize = MacroFeatureExtractor::MacroFeatures::boardSize;
 constexpr int centerStart = 3;
 constexpr int centerEnd = 5;
 constexpr int centerAreaCellCount = 9;
 constexpr int halfAreaCellCount = 36;
 
-bool isOccupied(const FeatureExtractor::BoardFeatures& features, int row, int column) noexcept
+bool isOccupied(const MacroFeatureExtractor::MacroFeatures& macroFeatures, int row, int column) noexcept
 {
-    return features.getValue(FeatureExtractor::Channel::Black, row, column) > 0.5f
-        || features.getValue(FeatureExtractor::Channel::White, row, column) > 0.5f;
+    return macroFeatures.getValue(MacroFeatureExtractor::Channel::Black, row, column) > 0.5f
+        || macroFeatures.getValue(MacroFeatureExtractor::Channel::White, row, column) > 0.5f;
 }
 
-int countChannel(const FeatureExtractor::BoardFeatures& features, FeatureExtractor::Channel channel) noexcept
+int countChannel(const MacroFeatureExtractor::MacroFeatures& macroFeatures, MacroFeatureExtractor::Channel channel) noexcept
 {
     int count = 0;
 
@@ -24,7 +24,7 @@ int countChannel(const FeatureExtractor::BoardFeatures& features, FeatureExtract
     {
         for (int column = 0; column < boardSize; ++column)
         {
-            if (features.getValue(channel, row, column) > 0.5f)
+            if (macroFeatures.getValue(channel, row, column) > 0.5f)
                 ++count;
         }
     }
@@ -33,7 +33,7 @@ int countChannel(const FeatureExtractor::BoardFeatures& features, FeatureExtract
 }
 }
 
-ControlVector DeterministicMappingEngine::mapFeatures(const FeatureExtractor::BoardFeatures& features) const noexcept
+ControlVector DeterministicMappingEngine::mapFeatures(const MacroFeatureExtractor::MacroFeatures& macroFeatures) const noexcept
 {
     ControlVector values;
     int centerAreaOccupiedCount = 0;
@@ -46,7 +46,7 @@ ControlVector DeterministicMappingEngine::mapFeatures(const FeatureExtractor::Bo
     {
         for (int column = 0; column < boardSize; ++column)
         {
-            if (! isOccupied(features, row, column))
+            if (! isOccupied(macroFeatures, row, column))
                 continue;
 
             if (row >= centerStart && row <= centerEnd && column >= centerStart && column <= centerEnd)
@@ -64,8 +64,8 @@ ControlVector DeterministicMappingEngine::mapFeatures(const FeatureExtractor::Bo
         }
     }
 
-    const auto blackCount = countChannel(features, FeatureExtractor::Channel::Black);
-    const auto whiteCount = countChannel(features, FeatureExtractor::Channel::White);
+    const auto blackCount = countChannel(macroFeatures, MacroFeatureExtractor::Channel::Black);
+    const auto whiteCount = countChannel(macroFeatures, MacroFeatureExtractor::Channel::White);
     const auto occupiedCount = blackCount + whiteCount;
 
     values[ControlVector::blackStoneDensity] = clamp01(static_cast<float>(blackCount) / static_cast<float>(BoardState::numCells));

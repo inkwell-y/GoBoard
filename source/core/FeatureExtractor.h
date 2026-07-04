@@ -4,7 +4,7 @@
 
 #include <array>
 
-class FeatureExtractor
+class MacroFeatureExtractor
 {
 public:
     enum class Channel
@@ -14,7 +14,7 @@ public:
         White
     };
 
-    struct BoardFeatures
+    struct MacroFeatures
     {
         static constexpr int boardSize = BoardState::boardSize;
         static constexpr int channelCount = 3;
@@ -31,8 +31,8 @@ public:
             return static_cast<int>(channel) * valuesPerChannel + row * boardSize + column;
         }
 
-        friend class FeatureExtractor;
+        friend class MacroFeatureExtractor;
     };
 
-    static BoardFeatures extract(const BoardState& boardState) noexcept;
+    static MacroFeatures extract(const BoardState& boardState) noexcept;
 };

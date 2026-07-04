@@ -8,13 +8,13 @@ class MappingEngine
 public:
     virtual ~MappingEngine() = default;
 
-    virtual ControlVector mapFeatures(const FeatureExtractor::BoardFeatures& features) const noexcept = 0;
+    virtual ControlVector mapFeatures(const MacroFeatureExtractor::MacroFeatures& macroFeatures) const noexcept = 0;
 };
 
 class DeterministicMappingEngine final : public MappingEngine
 {
 public:
-    ControlVector mapFeatures(const FeatureExtractor::BoardFeatures& features) const noexcept override;
+    ControlVector mapFeatures(const MacroFeatureExtractor::MacroFeatures& macroFeatures) const noexcept override;
 
 private:
     static float clamp01(float value) noexcept;

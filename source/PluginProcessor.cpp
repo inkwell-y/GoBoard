@@ -173,8 +173,8 @@ bool PluginProcessor::ensureOscConnected()
 
 void PluginProcessor::updateControlVector()
 {
-    currentFeatures = FeatureExtractor::extract(boardState);
-    currentControlVector = mappingEngine->mapFeatures(currentFeatures);
+    currentMacroFeatures = MacroFeatureExtractor::extract(boardState);
+    currentControlVector = mappingEngine->mapFeatures(currentMacroFeatures);
 }
 
 void PluginProcessor::queueMacroMidiMessages(const ControlVector& values)
