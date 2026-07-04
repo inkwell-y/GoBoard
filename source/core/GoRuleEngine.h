@@ -26,6 +26,23 @@ enum class GameStatus
     GameOver
 };
 
+enum class ScoreWinner
+{
+    None,
+    Black,
+    White,
+    Tie
+};
+
+struct AreaScore
+{
+    bool valid = false;
+    double blackScore = 0.0;
+    double whiteScore = 0.0;
+    double komi = 7.5;
+    ScoreWinner winner = ScoreWinner::None;
+};
+
 enum class MoveFailureReason
 {
     None,
@@ -53,6 +70,8 @@ public:
     GameStatus getGameStatus() const noexcept;
     int getConsecutivePasses() const noexcept;
     bool isGameOver() const noexcept;
+    double getKomi() const noexcept;
+    void setKomi(double) noexcept;
     std::size_t getBoardHistorySize() const noexcept;
     bool hasSeenCurrentBoardPosition() const noexcept;
     void recordCurrentBoardPosition() noexcept;
@@ -69,6 +88,7 @@ private:
     BoardState::CellState currentTurn = BoardState::CellState::Black;
     GameStatus gameStatus = GameStatus::Playing;
     int consecutivePasses = 0;
+    double komi = 7.5;
     std::unordered_set<std::size_t> boardHistory;
 };
 
@@ -80,6 +100,7 @@ public:
     std::vector<BoardPosition> neighbors(BoardPosition) const noexcept;
     std::vector<BoardPosition> getGroup(BoardPosition) const;
     int countLiberties(const std::vector<BoardPosition>& group) const noexcept;
+    AreaScore calculateAreaScore() const;
     MoveResult passTurn() noexcept;
     MoveResult playMove(BoardPosition) noexcept;
 

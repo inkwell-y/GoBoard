@@ -28,6 +28,11 @@ BoardState::CellState BoardComponent::getCurrentTurn() const noexcept
     return gameState.getCurrentTurn();
 }
 
+AreaScore BoardComponent::getAreaScore() const
+{
+    return goRuleEngine.calculateAreaScore();
+}
+
 bool BoardComponent::isGameOver() const noexcept
 {
     return gameState.isGameOver();

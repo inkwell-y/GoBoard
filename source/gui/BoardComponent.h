@@ -12,6 +12,7 @@ public:
     BoardComponent(GameState&, GoRuleEngine&);
 
     BoardState::CellState getCurrentTurn() const noexcept;
+    AreaScore getAreaScore() const;
     bool isGameOver() const noexcept;
     juce::String getCurrentTurnText() const;
     juce::String getStatusText() const;

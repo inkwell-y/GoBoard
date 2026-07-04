@@ -39,6 +39,16 @@ bool GameState::isGameOver() const noexcept
     return gameStatus == GameStatus::GameOver;
 }
 
+double GameState::getKomi() const noexcept
+{
+    return komi;
+}
+
+void GameState::setKomi(double newKomi) noexcept
+{
+    komi = newKomi;
+}
+
 std::size_t GameState::getBoardHistorySize() const noexcept
 {
     return boardHistory.size();
@@ -155,6 +165,85 @@ int GoRuleEngine::countLiberties(const std::vector<BoardPosition>& group) const 
     }
 
     return static_cast<int>(liberties.size());
+}
+
+AreaScore GoRuleEngine::calculateAreaScore() const
+{
+    AreaScore score;
+    score.komi = gameState.getKomi();
+
+    if (!gameState.isGameOver())
+        return score;
+
+    score.valid = true;
+
+    const auto& boardState = gameState.getBoardState();
+    score.blackScore = static_cast<double>(boardState.countBlack());
+    score.whiteScore = static_cast<double>(boardState.countWhite()) + score.komi;
+
+    std::set<BoardPosition> visitedEmptyPositions;
+
+    for (int row = 0; row < BoardState::boardSize; ++row)
+    {
+        for (int column = 0; column < BoardState::boardSize; ++column)
+        {
+            const BoardPosition start { row, column };
+
+            if (boardState.getCell(row, column) != BoardState::CellState::Empty)
+                continue;
+
+            if (visitedEmptyPositions.find(start) != visitedEmptyPositions.end())
+                continue;
+
+            std::queue<BoardPosition> positionsToVisit;
+            std::set<BoardPosition> region;
+            std::set<BoardState::CellState> borderingColors;
+
+            positionsToVisit.push(start);
+            visitedEmptyPositions.insert(start);
+
+            while (!positionsToVisit.empty())
+            {
+                const auto current = positionsToVisit.front();
+                positionsToVisit.pop();
+                region.insert(current);
+
+                for (const auto neighbor : neighbors(current))
+                {
+                    const auto neighborState = boardState.getCell(neighbor.row, neighbor.column);
+
+                    if (neighborState == BoardState::CellState::Empty)
+                    {
+                        if (visitedEmptyPositions.find(neighbor) != visitedEmptyPositions.end())
+                            continue;
+
+                        visitedEmptyPositions.insert(neighbor);
+                        positionsToVisit.push(neighbor);
+                        continue;
+                    }
+
+                    borderingColors.insert(neighborState);
+                }
+            }
+
+            if (borderingColors.size() != 1)
+                continue;
+
+            if (*borderingColors.begin() == BoardState::CellState::Black)
+                score.blackScore += static_cast<double>(region.size());
+            else if (*borderingColors.begin() == BoardState::CellState::White)
+                score.whiteScore += static_cast<double>(region.size());
+        }
+    }
+
+    if (score.blackScore > score.whiteScore)
+        score.winner = ScoreWinner::Black;
+    else if (score.whiteScore > score.blackScore)
+        score.winner = ScoreWinner::White;
+    else
+        score.winner = ScoreWinner::Tie;
+
+    return score;
 }
 
 MoveResult GoRuleEngine::passTurn() noexcept

@@ -17,12 +17,16 @@ public:
 private:
     void updateMacroLabels();
     void updateTurnLabel();
+    void updateScoreLabels();
 
     PluginProcessor& processorRef;
     BoardComponent boardComponent;
     juce::Label titleLabel;
     juce::Label turnLabel;
     juce::Label oscStatusLabel;
+    juce::Label blackScoreLabel;
+    juce::Label whiteScoreLabel;
+    juce::Label winnerLabel;
     juce::TextButton passButton { "Pass" };
     juce::TextButton resetButton { "Reset" };
     std::array<juce::Label, 8> macroLabels;

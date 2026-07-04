@@ -284,6 +284,77 @@ public:
         expect(gameState.getConsecutivePasses() == 0);
         expect(gameState.getBoardHistorySize() == 1);
         expect(boardState.countOccupied() == 0);
+
+        beginTest("empty board with default komi gives white the win");
+
+        gameState.reset();
+        expect(ruleEngine.passTurn().legal);
+        expect(ruleEngine.passTurn().legal);
+
+        const auto emptyBoardScore = ruleEngine.calculateAreaScore();
+        expect(emptyBoardScore.valid);
+        expectWithinAbsoluteError(emptyBoardScore.blackScore, 0.0, 0.0001);
+        expectWithinAbsoluteError(emptyBoardScore.whiteScore, 7.5, 0.0001);
+        expect(emptyBoardScore.winner == ScoreWinner::White);
+
+        beginTest("a one-point territory surrounded by black counts for black");
+
+        gameState.reset();
+        boardState.setCell(3, 4, BoardState::CellState::Black);
+        boardState.setCell(4, 3, BoardState::CellState::Black);
+        boardState.setCell(5, 4, BoardState::CellState::Black);
+        boardState.setCell(4, 5, BoardState::CellState::Black);
+        expect(ruleEngine.passTurn().legal);
+        expect(ruleEngine.passTurn().legal);
+
+        const auto blackTerritoryScore = ruleEngine.calculateAreaScore();
+        expect(blackTerritoryScore.valid);
+        expectWithinAbsoluteError(blackTerritoryScore.blackScore, 5.0, 0.0001);
+        expectWithinAbsoluteError(blackTerritoryScore.whiteScore, 7.5, 0.0001);
+
+        beginTest("a one-point territory surrounded by white counts for white");
+
+        gameState.reset();
+        boardState.setCell(3, 4, BoardState::CellState::White);
+        boardState.setCell(4, 3, BoardState::CellState::White);
+        boardState.setCell(5, 4, BoardState::CellState::White);
+        boardState.setCell(4, 5, BoardState::CellState::White);
+        expect(ruleEngine.passTurn().legal);
+        expect(ruleEngine.passTurn().legal);
+
+        const auto whiteTerritoryScore = ruleEngine.calculateAreaScore();
+        expect(whiteTerritoryScore.valid);
+        expectWithinAbsoluteError(whiteTerritoryScore.blackScore, 0.0, 0.0001);
+        expectWithinAbsoluteError(whiteTerritoryScore.whiteScore, 12.5, 0.0001);
+
+        beginTest("neutral empty regions do not count for either player");
+
+        gameState.reset();
+        boardState.setCell(3, 4, BoardState::CellState::Black);
+        boardState.setCell(5, 4, BoardState::CellState::Black);
+        boardState.setCell(4, 3, BoardState::CellState::White);
+        boardState.setCell(4, 5, BoardState::CellState::White);
+        expect(ruleEngine.passTurn().legal);
+        expect(ruleEngine.passTurn().legal);
+
+        const auto neutralRegionScore = ruleEngine.calculateAreaScore();
+        expect(neutralRegionScore.valid);
+        expectWithinAbsoluteError(neutralRegionScore.blackScore, 2.0, 0.0001);
+        expectWithinAbsoluteError(neutralRegionScore.whiteScore, 9.5, 0.0001);
+
+        beginTest("white score includes configurable komi");
+
+        gameState.reset();
+        gameState.setKomi(6.5);
+        boardState.setCell(0, 0, BoardState::CellState::White);
+        expect(ruleEngine.passTurn().legal);
+        expect(ruleEngine.passTurn().legal);
+
+        const auto configurableKomiScore = ruleEngine.calculateAreaScore();
+        expect(configurableKomiScore.valid);
+        expectWithinAbsoluteError(configurableKomiScore.komi, 6.5, 0.0001);
+        expectWithinAbsoluteError(configurableKomiScore.whiteScore, 87.5, 0.0001);
+        expect(configurableKomiScore.winner == ScoreWinner::White);
     }
 };
 

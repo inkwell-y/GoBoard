@@ -12,6 +12,26 @@ const std::array<const char*, 8> macroNames {
     "Macro 7: Left half density",
     "Macro 8: Right half density"
 };
+
+juce::String winnerToString(ScoreWinner winner)
+{
+    switch (winner)
+    {
+        case ScoreWinner::Black:
+            return "Black";
+
+        case ScoreWinner::White:
+            return "White";
+
+        case ScoreWinner::Tie:
+            return "Tie";
+
+        case ScoreWinner::None:
+            break;
+    }
+
+    return "Pending";
+}
 }
 
 PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
@@ -31,6 +51,12 @@ PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
     oscStatusLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(oscStatusLabel);
 
+    for (auto* label : { &blackScoreLabel, &whiteScoreLabel, &winnerLabel })
+    {
+        label->setJustificationType(juce::Justification::centredLeft);
+        addAndMakeVisible(*label);
+    }
+
     passButton.onClick = [this]
     {
         boardComponent.passTurn();
@@ -47,6 +73,7 @@ PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
     {
         processorRef.boardStateChanged();
         updateTurnLabel();
+        updateScoreLabels();
         updateMacroLabels();
     };
 
@@ -59,6 +86,7 @@ PluginEditor::PluginEditor(PluginProcessor& pluginProcessor)
     }
 
     updateTurnLabel();
+    updateScoreLabels();
     updateMacroLabels();
 
     setResizable(true, false);
@@ -97,6 +125,13 @@ void PluginEditor::resized()
 
     constexpr int rowHeight = 34;
 
+    blackScoreLabel.setBounds(macroArea.removeFromTop(rowHeight));
+    macroArea.removeFromTop(8);
+    whiteScoreLabel.setBounds(macroArea.removeFromTop(rowHeight));
+    macroArea.removeFromTop(8);
+    winnerLabel.setBounds(macroArea.removeFromTop(rowHeight));
+    macroArea.removeFromTop(20);
+
     for (auto& label : macroLabels)
     {
         label.setBounds(macroArea.removeFromTop(rowHeight));
@@ -119,4 +154,21 @@ void PluginEditor::updateMacroLabels()
         macroLabels[index].setText(juce::String(macroNames[index]) + ": " + juce::String(macroValues[index], 3),
                                    juce::dontSendNotification);
     }
+}
+
+void PluginEditor::updateScoreLabels()
+{
+    const auto score = boardComponent.getAreaScore();
+
+    if (!score.valid)
+    {
+        blackScoreLabel.setText("Black score: Pending", juce::dontSendNotification);
+        whiteScoreLabel.setText("White score: Pending", juce::dontSendNotification);
+        winnerLabel.setText("Winner: Pending", juce::dontSendNotification);
+        return;
+    }
+
+    blackScoreLabel.setText("Black score: " + juce::String(score.blackScore, 1), juce::dontSendNotification);
+    whiteScoreLabel.setText("White score: " + juce::String(score.whiteScore, 1), juce::dontSendNotification);
+    winnerLabel.setText("Winner: " + winnerToString(score.winner), juce::dontSendNotification);
 }
