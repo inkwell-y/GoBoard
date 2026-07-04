@@ -123,11 +123,30 @@ MoveResult GoRuleEngine::playMove(BoardPosition position) noexcept
         return { false, MoveFailureReason::OutOfBounds };
 
     auto& boardState = gameState.getBoardState();
+    const auto currentPlayer = gameState.getCurrentTurn();
 
     if (boardState.getCell(position.row, position.column) != BoardState::CellState::Empty)
         return { false, MoveFailureReason::OccupiedIntersection };
 
-    boardState.setCell(position.row, position.column, gameState.getCurrentTurn());
+    boardState.setCell(position.row, position.column, currentPlayer);
+
+    std::set<BoardPosition> processedOpponentStones;
+
+    for (const auto neighbor : neighbors(position))
+    {
+        if (boardState.getCell(neighbor.row, neighbor.column) != oppositeColor(currentPlayer))
+            continue;
+
+        if (processedOpponentStones.find(neighbor) != processedOpponentStones.end())
+            continue;
+
+        const auto opponentGroup = getGroup(neighbor);
+        processedOpponentStones.insert(opponentGroup.begin(), opponentGroup.end());
+
+        if (countLiberties(opponentGroup) == 0)
+            removeGroup(opponentGroup);
+    }
+
     gameState.advanceTurn();
     return { true, MoveFailureReason::None };
 }
@@ -138,4 +157,23 @@ bool GoRuleEngine::isValidPosition(BoardPosition position) noexcept
         && position.row < BoardState::boardSize
         && position.column >= 0
         && position.column < BoardState::boardSize;
+}
+
+BoardState::CellState GoRuleEngine::oppositeColor(BoardState::CellState color) noexcept
+{
+    if (color == BoardState::CellState::Black)
+        return BoardState::CellState::White;
+
+    if (color == BoardState::CellState::White)
+        return BoardState::CellState::Black;
+
+    return BoardState::CellState::Empty;
+}
+
+void GoRuleEngine::removeGroup(const std::vector<BoardPosition>& group) noexcept
+{
+    auto& boardState = gameState.getBoardState();
+
+    for (const auto position : group)
+        boardState.setCell(position.row, position.column, BoardState::CellState::Empty);
 }

@@ -60,6 +60,8 @@ public:
 
 private:
     static bool isValidPosition(BoardPosition) noexcept;
+    static BoardState::CellState oppositeColor(BoardState::CellState) noexcept;
+    void removeGroup(const std::vector<BoardPosition>& group) noexcept;
 
     GameState& gameState;
 };

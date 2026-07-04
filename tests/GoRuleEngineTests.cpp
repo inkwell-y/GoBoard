@@ -92,6 +92,60 @@ public:
         expect(std::find(centerNeighbors.begin(), centerNeighbors.end(), BoardPosition { 4, 3 }) != centerNeighbors.end());
         expect(std::find(centerNeighbors.begin(), centerNeighbors.end(), BoardPosition { 4, 5 }) != centerNeighbors.end());
         expect(std::find(centerNeighbors.begin(), centerNeighbors.end(), BoardPosition { 3, 3 }) == centerNeighbors.end());
+
+        beginTest("white surrounds one black stone and captures it");
+
+        gameState.reset();
+        boardState.setCell(4, 4, BoardState::CellState::Black);
+        boardState.setCell(3, 4, BoardState::CellState::White);
+        boardState.setCell(4, 3, BoardState::CellState::White);
+        boardState.setCell(5, 4, BoardState::CellState::White);
+        gameState.advanceTurn();
+
+        const auto whiteCapture = ruleEngine.playMove({ 4, 5 });
+        expect(whiteCapture.legal);
+        expect(boardState.getCell(4, 4) == BoardState::CellState::Empty);
+        expect(boardState.getCell(4, 5) == BoardState::CellState::White);
+
+        beginTest("black captures a connected white group of two stones");
+
+        gameState.reset();
+        boardState.setCell(4, 4, BoardState::CellState::White);
+        boardState.setCell(4, 5, BoardState::CellState::White);
+        boardState.setCell(3, 4, BoardState::CellState::Black);
+        boardState.setCell(5, 4, BoardState::CellState::Black);
+        boardState.setCell(4, 3, BoardState::CellState::Black);
+        boardState.setCell(3, 5, BoardState::CellState::Black);
+        boardState.setCell(5, 5, BoardState::CellState::Black);
+
+        const auto blackCapture = ruleEngine.playMove({ 4, 6 });
+        expect(blackCapture.legal);
+        expect(boardState.getCell(4, 4) == BoardState::CellState::Empty);
+        expect(boardState.getCell(4, 5) == BoardState::CellState::Empty);
+        expect(boardState.getCell(4, 6) == BoardState::CellState::Black);
+
+        beginTest("capturing one group does not remove unrelated stones");
+
+        gameState.reset();
+        boardState.setCell(0, 0, BoardState::CellState::Black);
+        boardState.setCell(8, 8, BoardState::CellState::White);
+        boardState.setCell(4, 4, BoardState::CellState::White);
+        boardState.setCell(4, 5, BoardState::CellState::White);
+        boardState.setCell(3, 4, BoardState::CellState::Black);
+        boardState.setCell(5, 4, BoardState::CellState::Black);
+        boardState.setCell(4, 3, BoardState::CellState::Black);
+        boardState.setCell(3, 5, BoardState::CellState::Black);
+        boardState.setCell(5, 5, BoardState::CellState::Black);
+
+        const auto isolatedCapture = ruleEngine.playMove({ 4, 6 });
+        expect(isolatedCapture.legal);
+        expect(boardState.getCell(0, 0) == BoardState::CellState::Black);
+        expect(boardState.getCell(8, 8) == BoardState::CellState::White);
+
+        beginTest("captured cells become empty");
+
+        expect(boardState.getCell(4, 4) == BoardState::CellState::Empty);
+        expect(boardState.getCell(4, 5) == BoardState::CellState::Empty);
     }
 };
 
